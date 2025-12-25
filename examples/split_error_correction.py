@@ -88,9 +88,9 @@ async def run_split_error_correction(
             side_path = os.path.join(sample_temp_dir, f"option_{option_num}_side.png")
             top_path = os.path.join(sample_temp_dir, f"option_{option_num}_top.png")
 
-            sample[f'option_{option_num}_front_path'].save(front_path)
-            sample[f'option_{option_num}_side_path'].save(side_path)
-            sample[f'option_{option_num}_top_path'].save(top_path)
+            sample[f'option_{option_num}_front_image'].save(front_path)
+            sample[f'option_{option_num}_side_image'].save(side_path)
+            sample[f'option_{option_num}_top_image'].save(top_path)
 
             option_data = {
                 'id': sample[f'option_{option_num}_neuron_id'],

@@ -150,16 +150,10 @@ class ConnectomeVisualizer:
                     # Use CAVEclient EM path if it's precomputed (for CloudVolume compatibility)
                     if client_em_path.startswith("precomputed://"):
                         self.em_path = client_em_path
-                    # For segmentation: prefer precomputed:// over graphene:// for CloudVolume
-                    # graphene:// paths require authentication and may not work with CloudVolume
-                    if client_seg_path.startswith("precomputed://"):
-                        self.seg_path = client_seg_path
-                    # If CAVEclient returns graphene:// but we have a precomputed fallback, keep the fallback
-                    elif client_seg_path.startswith("graphene://") and self.seg_path and self.seg_path.startswith("precomputed://"):
-                        if self.verbose:
-                            print(f"  Using precomputed segmentation path (graphene:// requires auth): {self.seg_path}")
-                    elif client_seg_path.startswith("graphene://"):
-                        # Only use graphene if no precomputed fallback exists
+                    # For segmentation: use CAVEclient path (graphene:// or precomputed://)
+                    # Note: graphene:// paths work with CloudVolume and are required for mesh data
+                    # in some datasets (e.g., H01, Fish1) where precomputed paths lack mesh manifests
+                    if client_seg_path.startswith("precomputed://") or client_seg_path.startswith("graphene://"):
                         self.seg_path = client_seg_path
                 except Exception as path_error:
                     if self.verbose:

@@ -83,8 +83,8 @@ The `ConnectomeVisualizer` class provides tools for visualizing neurons and EM d
 ```python
 from src.connectome_visualizer import ConnectomeVisualizer
 
-# Initialize visualizer
-visualizer = ConnectomeVisualizer(species="mouse")
+# Initialize visualizer for any supported species
+visualizer = ConnectomeVisualizer(species="zebrafish")  # or "mouse", "fly", "human", "zebrafish"
 
 # Load and visualize neurons
 visualizer.load_neurons([864691134965949727])
@@ -99,6 +99,7 @@ The toolkit supports multiple connectomics datasets, each with different access 
 
 - **Mouse (MICrONS)** and **Fly (FlyWire)**: Generally auto-authorized with CAVEclient setup
 - **Human (H01)**: Requires explicit authentication. Visit the [H01 Proofreading Page](https://h01-release.storage.googleapis.com/proofreading.html) and follow the authentication steps. The H01 proofreading page also provides detailed documentation on the proofreading methodology (handling merge and split errors) that this benchmark is based on.
+- **Zebrafish (Fish1)**: Requires explicit authentication. Visit the [Fish1 Tutorials Page](https://fish1-release.storage.googleapis.com/tutorials.html) and follow the authentication steps. Fish1 uses the same CAVEclient server infrastructure as H01.
 
 Once authenticated, all CAVEclient features (skeletons, edit history, API-based segmentation processing) are available for these datasets.
 

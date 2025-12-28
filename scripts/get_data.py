@@ -12,6 +12,26 @@ from src.connectome_visualizer import ConnectomeVisualizer
 import random
 import caveclient
 import argparse
+import warnings
+import logging
+
+# Suppress CloudVolume deduplication warnings (they're informational, not errors)
+warnings.filterwarnings("ignore", message=".*deduplication not currently supported.*")
+
+# Suppress CloudVolume's mesh warning prints by redirecting them
+logging.getLogger('cloudvolume').setLevel(logging.ERROR)
+
+
+class NumpyEncoder(json.JSONEncoder):
+    """Custom JSON encoder that handles numpy types."""
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super().default(obj)
 
 class TrainingDataGatherer:
     """
@@ -108,8 +128,6 @@ class TrainingDataGatherer:
             visualizer = ConnectomeVisualizer(output_dir=self.output_dir, species=self.visualizer.species, timestamp=prev_timestamp, verbose=False)
         else:
             visualizer = ConnectomeVisualizer(output_dir=self.output_dir, species=self.visualizer.species, timestamp=timestamp, verbose=False)
-        visualizer.timestamp = timestamp
-        visualizer._connect_to_data_sources()
         
         if is_merge and not split_only:
 
@@ -194,7 +212,8 @@ class TrainingDataGatherer:
 
 
         elif not is_merge and not merge_only: # Split operation
-            print("Found split operation")
+            if self.verbose:
+                print("Found split operation")
             # Get root IDs involved in the split
             before_root_ids = edit_info.get('before_root_ids', [])
             after_root_ids = edit_info.get('after_root_ids', [])
@@ -278,14 +297,16 @@ class TrainingDataGatherer:
         Returns:
             List of dictionaries containing edit information
         """
-        print(f"Processing edit history for neuron {neuron_id}...")
+        if self.verbose:
+            print(f"Processing edit history for neuron {neuron_id}...")
         
         # Get the edit history
         # visualizer = FlyWireVisualizer(output_dir=self.output_dir, species=self.visualizer.species)
         # edit_history = self.visualizer.get_edit_history(neuron_id)
         
         if edit_history is None or len(edit_history) == 0:
-            print(f"No edit history found for neuron {neuron_id}")
+            if self.verbose:
+                print(f"No edit history found for neuron {neuron_id}")
             return []
         
 
@@ -371,9 +392,9 @@ class TrainingDataGatherer:
         # Create the full path
         filepath = os.path.join(self.output_dir, filename)
         
-        # Save the data
+        # Save the data (use NumpyEncoder to handle numpy int64/float64 types)
         with open(filepath, 'w') as f:
-            json.dump(edits, f, indent=2)
+            json.dump(edits, f, indent=2, cls=NumpyEncoder)
         
         print(f"Saved training data to {filepath}")
         
@@ -418,10 +439,8 @@ class TrainingDataGatherer:
                 timestamp = edit['prev_timestamp']
             else:
                 timestamp = edit['timestamp']
-            visualizer = ConnectomeVisualizer(output_dir=self.output_dir, species=self.visualizer.species, timestamp=timestamp, verbose=self.verbose)
-            visualizer.timestamp = timestamp
-            visualizer._connect_to_data_sources()
-            print(f"Previous timestamp: {edit['prev_timestamp']}, Current timestamp: {edit['timestamp']}")
+            # Create visualizer with verbose=False to avoid repeated init messages
+            visualizer = ConnectomeVisualizer(output_dir=self.output_dir, species=self.visualizer.species, timestamp=timestamp, verbose=False)
 
             # Get the interface point
             interface_point = edit['interface_point']
@@ -501,9 +520,9 @@ class TrainingDataGatherer:
         # Create the full path
         filepath = os.path.join(self.output_dir, filename)
         
-        # Save the data
+        # Save the data (use NumpyEncoder to handle numpy int64/float64 types)
         with open(filepath, 'w') as f:
-            json.dump(em_data, f, indent=2)
+            json.dump(em_data, f, indent=2, cls=NumpyEncoder)
         
         print(f"Saved EM data to {filepath}")
         
@@ -513,7 +532,7 @@ class TrainingDataGatherer:
 # Example usage
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Gather training data from connectome edit histories")
-    parser.add_argument("--species", type=str, required=True, choices=["fly", "mouse", "human"],
+    parser.add_argument("--species", type=str, required=True, choices=["fly", "mouse", "human", "zebrafish"],
                         help="Species to process")
     parser.add_argument("--num-neurons", type=int, default=200,
                         help="Number of neurons to process (default: 200)")
@@ -561,12 +580,21 @@ if __name__ == "__main__":
             random.seed(args.random_seed)
             neuron_ids = random.sample(neuron_ids, args.num_neurons)
         elif args.species == "zebrafish":
-            raise ValueError(
-                f"Species 'zebrafish' (Fish1) is not yet supported. "
-                f"CAVEclient setup required. See https://fish1-release.storage.googleapis.com/tutorials.html"
-            )
+            # Fish1 uses the same server address as H01
+            server_address = "https://global.brain-wire-test.org/"
+            client = caveclient.CAVEclient("fish1_full", server_address=server_address)
+            # Fish1 doesn't have a proofreading table, so we use get_delta_roots()
+            # to find neurons that have been edited (have merge/split history)
+            from datetime import datetime, timezone
+            start_time = datetime(2020, 1, 1, tzinfo=timezone.utc)
+            end_time = datetime(2025, 12, 31, tzinfo=timezone.utc)
+            old_roots, new_roots = client.chunkedgraph.get_delta_roots(start_time, end_time)
+            neuron_ids = list(set(new_roots))  # Unique edited neurons
+            print(f"Found {len(neuron_ids)} edited neurons via get_delta_roots()")
+            random.seed(args.random_seed)
+            neuron_ids = random.sample(neuron_ids, min(args.num_neurons, len(neuron_ids)))
         else:
-            raise ValueError(f"Unknown species: {args.species}. Supported species: fly, mouse, human")
+            raise ValueError(f"Unknown species: {args.species}. Supported species: fly, mouse, human, zebrafish")
 
         print(f"Processing {len(neuron_ids)} {args.species} neurons...")
         print(f"Settings: K={args.K}, split_only={args.split_only}, merge_only={args.merge_only}")

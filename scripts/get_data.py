@@ -582,44 +582,15 @@ if __name__ == "__main__":
             start_time = datetime(2020, 1, 1, tzinfo=timezone.utc)
             end_time = datetime(2025, 12, 31, tzinfo=timezone.utc)
             old_roots, new_roots = client.chunkedgraph.get_delta_roots(start_time, end_time)
-            all_neuron_ids = list(set(new_roots))  # Unique edited neurons
-            print(f"Found {len(all_neuron_ids)} edited neurons via get_delta_roots()")
-            
-            # Filter by vertex count to match zebrafish-like sizes (10K-1M vertices)
-            # Human neurons can be very large (5M+ vertices), so we filter for manageable sizes
-            MIN_VERTICES = 100000
-            MAX_VERTICES = 1000000
+            neuron_ids = list(set(new_roots))  # Unique edited neurons
+            print(f"Found {len(neuron_ids)} edited neurons via get_delta_roots()")
             random.seed(args.random_seed)
-            random.shuffle(all_neuron_ids)
-            
-            from src.connectome_visualizer import ConnectomeVisualizer
-            viz = ConnectomeVisualizer(output_dir=args.output_dir, species='human', verbose=False)
-            
-            neuron_ids = []
-            candidates_checked = 0
-            print(f"Filtering neurons by size ({MIN_VERTICES:,}-{MAX_VERTICES:,} vertices)...")
-            
-            for nid in all_neuron_ids:
-                if len(neuron_ids) >= args.num_neurons:
-                    break
-                candidates_checked += 1
-                try:
-                    meshes = viz.load_neurons([nid])
-                    if meshes and len(meshes[0].vertices) >= MIN_VERTICES and len(meshes[0].vertices) <= MAX_VERTICES:
-                        neuron_ids.append(nid)
-                        print(f"  Found suitable neuron {nid}: {len(meshes[0].vertices):,} vertices ({len(neuron_ids)}/{args.num_neurons})")
-                except:
-                    pass
-                if candidates_checked % 50 == 0:
-                    print(f"  Checked {candidates_checked} candidates, found {len(neuron_ids)} suitable neurons...")
-            
-            print(f"Selected {len(neuron_ids)} neurons with {MIN_VERTICES:,}-{MAX_VERTICES:,} vertices")
+            neuron_ids = random.sample(neuron_ids, min(args.num_neurons, len(neuron_ids)))
         elif args.species == "zebrafish":
             # Fish1 uses the same server address as H01
             server_address = "https://global.brain-wire-test.org/"
             client = caveclient.CAVEclient("fish1_full", server_address=server_address)
-            # Fish1 doesn't have a proofreading table, so we use get_delta_roots()
-            # to find neurons that have been edited (have merge/split history)
+            # Fish1 doesn't have a proofreading table, so we use get_delta_roots() to find neurons that have been edited (have merge/split history)
             from datetime import datetime, timezone
             start_time = datetime(2020, 1, 1, tzinfo=timezone.utc)
             end_time = datetime(2025, 12, 31, tzinfo=timezone.utc)

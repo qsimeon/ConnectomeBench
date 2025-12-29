@@ -576,9 +576,44 @@ if __name__ == "__main__":
             # H01 uses a different server address
             server_address = "https://global.brain-wire-test.org/"
             client = caveclient.CAVEclient("h01_c3_flat", server_address=server_address)
-            neuron_ids = list(client.materialize.query_table('proofreading_status_test')['valid_id'])
+            # H01's proofreading_status_test table only has 1 neuron, so we use get_delta_roots()
+            # to find neurons that have been edited (have merge/split history)
+            from datetime import datetime, timezone
+            start_time = datetime(2020, 1, 1, tzinfo=timezone.utc)
+            end_time = datetime(2025, 12, 31, tzinfo=timezone.utc)
+            old_roots, new_roots = client.chunkedgraph.get_delta_roots(start_time, end_time)
+            all_neuron_ids = list(set(new_roots))  # Unique edited neurons
+            print(f"Found {len(all_neuron_ids)} edited neurons via get_delta_roots()")
+            
+            # Filter by vertex count to match zebrafish-like sizes (10K-1M vertices)
+            # Human neurons can be very large (5M+ vertices), so we filter for manageable sizes
+            MIN_VERTICES = 100000
+            MAX_VERTICES = 1000000
             random.seed(args.random_seed)
-            neuron_ids = random.sample(neuron_ids, args.num_neurons)
+            random.shuffle(all_neuron_ids)
+            
+            from src.connectome_visualizer import ConnectomeVisualizer
+            viz = ConnectomeVisualizer(output_dir=args.output_dir, species='human', verbose=False)
+            
+            neuron_ids = []
+            candidates_checked = 0
+            print(f"Filtering neurons by size ({MIN_VERTICES:,}-{MAX_VERTICES:,} vertices)...")
+            
+            for nid in all_neuron_ids:
+                if len(neuron_ids) >= args.num_neurons:
+                    break
+                candidates_checked += 1
+                try:
+                    meshes = viz.load_neurons([nid])
+                    if meshes and len(meshes[0].vertices) >= MIN_VERTICES and len(meshes[0].vertices) <= MAX_VERTICES:
+                        neuron_ids.append(nid)
+                        print(f"  Found suitable neuron {nid}: {len(meshes[0].vertices):,} vertices ({len(neuron_ids)}/{args.num_neurons})")
+                except:
+                    pass
+                if candidates_checked % 50 == 0:
+                    print(f"  Checked {candidates_checked} candidates, found {len(neuron_ids)} suitable neurons...")
+            
+            print(f"Selected {len(neuron_ids)} neurons with {MIN_VERTICES:,}-{MAX_VERTICES:,} vertices")
         elif args.species == "zebrafish":
             # Fish1 uses the same server address as H01
             server_address = "https://global.brain-wire-test.org/"

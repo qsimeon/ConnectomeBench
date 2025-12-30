@@ -71,7 +71,7 @@ Results are saved as CSV files with accuracy metrics when ground truth is availa
 
 The toolkit provides several scripts for processing connectome data from scratch:
 
-- `scripts/get_data.py`: Gather training data from MICrONS or FlyWire edit histories
+- `scripts/get_data.py`: Gather training data from MICrONS, FlyWire or Fish1 edit histories
 - `scripts/split_resolution.py`: Process and evaluate split error resolution tasks
 - `scripts/merge_resolution.py`: Process and evaluate merge error detection tasks
 - `scripts/segmentation_classification.py`: Classify segmentations

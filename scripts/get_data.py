@@ -576,8 +576,7 @@ if __name__ == "__main__":
             # H01 uses a different server address
             server_address = "https://global.brain-wire-test.org/"
             client = caveclient.CAVEclient("h01_c3_flat", server_address=server_address)
-            # H01's proofreading_status_test table only has 1 neuron, so we use get_delta_roots()
-            # to find neurons that have been edited (have merge/split history)
+            # H01's proofreading_status_test table only has 1 neuron, so we use get_delta_roots() to find neurons that have been edited (have merge/split history)
             from datetime import datetime, timezone
             start_time = datetime(2020, 1, 1, tzinfo=timezone.utc)
             end_time = datetime(2025, 12, 31, tzinfo=timezone.utc)

@@ -683,6 +683,12 @@ The 3D snapshots are three different views of the same segment. The dimensions o
         elif species == "mouse":
             prompt += """For mouse neurons, the somas tend to be round and generally a multiple processes extend from them outwards. Processes can be axons or dendrite, long and often branching. Synapses can also be considered as a part of  processes, and these are often small segments (often smaller than a cubic micron). The nucleuses are round and do not have any processes extending from them. Blood vessels are tubular and obviously do not have any processes extending from them. Glial cells lack the branching processes of neurons, and instead appear like jagged masses. 
         """
+        elif species == "human":
+            prompt += """For human neurons, the somas tend to be round and generally multiple processes extend from them outwards. Processes can be axons or dendrites, long and often branching. Synapses can also be considered as a part of processes, and these are often small segments (often smaller than a cubic micron). The nucleuses are round and do not have any processes extending from them. Blood vessels are tubular and obviously do not have any processes extending from them. Glial cells lack the branching processes of neurons, and instead appear like jagged masses. 
+        """
+        elif species == "zebrafish":
+            prompt += """For zebrafish neurons, the somas tend to be round and generally a single or few processes extend from them before branching. Processes can be axons or dendrites, long and often branching. Synapses can also be considered as a part of processes, and these are often small segments (often smaller than a cubic micron). The nucleuses are round and do not have any processes extending from them. Blood vessels are tubular and obviously do not have any processes extending from them. Glial cells lack the branching processes of neurons, and instead appear like jagged masses. 
+        """
         else:
             raise ValueError(f"Species {species} not supported")
 

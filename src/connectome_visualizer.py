@@ -45,17 +45,17 @@ class ConnectomeVisualizer:
     A class for visualizing connectomics neurons and EM data.
 
     Supports multiple species:
-    - mouse (MICrONS dataset) - Public access
-    - fly (FlyWire dataset) - Public access
-    - zebrafish (Fish1 dataset) - Public precomputed data available
-      (Authentication optional for advanced CAVEclient features)
+    - mouse (MICrONS dataset) - Public access, no authentication required
+    - fly (FlyWire dataset) - Public access, no authentication required
     - human (H01 dataset) - Requires authentication (see README)
+    - zebrafish (Fish1 dataset) - Requires authentication (see README)
 
     The CAVEclient automatically retrieves the correct EM and segmentation paths via its
-    InfoService API. For zebrafish, we use public precomputed segmentation data by default
-    for simplicity, though authenticated access to the graphene backend is available.
+    InfoService API. Authentication tokens are passed to both CAVEclient and CloudVolume
+    to enable access to authenticated graphene:// backend endpoints.
 
-    See README for authentication instructions for advanced features.
+    Authentication is managed via a CAVECLIENT_TOKEN in a .env file.
+    See README for complete authentication setup instructions.
     """
     
     # Default paths for data sources
@@ -65,10 +65,10 @@ class ConnectomeVisualizer:
     MICRONS_SEG_PATH = "graphene://https://minnie.microns-daf.com/segmentation/table/minnie65_public"
     # H01 (Human Cortex) - Requires authentication via https://h01-release.storage.googleapis.com/proofreading.html
     H01_EM_PATH = "precomputed://gs://h01-release/data/20210601/4nm_raw"
-    H01_SEG_PATH = "graphene://https://local.brain-wire-test.org/segmentation/table/h01_full0_v2"  # C3 is latest, C2 also available
-    # Fish1 (Zebrafish) - Public data available, authentication optional for advanced features
+    H01_SEG_PATH = "graphene://https://local.brain-wire-test.org/segmentation/table/h01_full0_v2"
+    # Fish1 (Zebrafish) - Requires authentication via https://fish1-release.storage.googleapis.com/tutorials.html
     FISH1_EM_PATH = "precomputed://gs://fish1-public/clahe_231218"
-    FISH1_SEG_PATH = "graphene://https://pcgv3local.brain-wire-test.org/segmentation/table/fish1_v250915"  # Public precomputed segmentation
+    FISH1_SEG_PATH = "graphene://https://pcgv3local.brain-wire-test.org/segmentation/table/fish1_v250915"
 
     # Default colors for neurons
     NEURON_COLORS = [

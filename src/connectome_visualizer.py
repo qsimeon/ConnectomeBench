@@ -164,83 +164,55 @@ class ConnectomeVisualizer:
         self.em_mip = self.data_parameters[species]["em_mip"]
         self.seg_mip = self.data_parameters[species]["seg_mip"]
         self.datastack_name = self.data_parameters[species]["datastack_name"]
-        
-        # Initialize CAVEclient if datastack is available
-        # Note: Human (H01) and Zebrafish (Fish1) require authentication before use - see README
+
+        # Get CAVECLIENT_TOKEN for authenticated datasets (human, zebrafish)
+        self.auth_token = None
+        if species in ["human", "zebrafish"]:
+            self.auth_token = os.getenv("CAVECLIENT_TOKEN")
+            if not self.auth_token:
+                raise ValueError(
+                    f"\n{'='*70}\n"
+                    f"ERROR: CAVECLIENT_TOKEN not found!\n"
+                    f"{'='*70}\n"
+                    f"The {species} dataset requires authentication.\n\n"
+                    f"To fix this:\n"
+                    f"1. Make sure you have a .env file in the project root with:\n"
+                    f"   CAVECLIENT_TOKEN=your_token_here\n\n"
+                    f"2. If you don't have a token yet:\n"
+                    f"   a) Request access: https://forms.gle/tpbndoL1J6xB47KQ9\n"
+                    f"   b) After approval, get your token from:\n"
+                    f"      https://global.brain-wire-test.org/auth/api/v1/create_token\n"
+                    f"   c) Run: python scripts/setup_cave_auth.py\n\n"
+                    f"3. See .env.example for template\n"
+                    f"{'='*70}\n"
+                )
+
+        # Initialize CAVEclient
         if self.datastack_name is not None:
+            if species in ["human", "zebrafish"]:
+                server_address = "https://global.brain-wire-test.org/"
+                self.client = CAVEclient(self.datastack_name, server_address=server_address, auth_token=self.auth_token)
+            else:
+                self.client = CAVEclient(self.datastack_name)
+
+            # Get paths from CAVEclient InfoService (overrides hardcoded defaults)
             try:
-                # H01 and Fish1 use a different server address and require authentication
-                if species in ["human", "zebrafish"]:
-                    server_address = "https://global.brain-wire-test.org/"
-
-                    # Check for CAVECLIENT_TOKEN
-                    token = os.getenv("CAVECLIENT_TOKEN")
-                    if not token:
-                        # For zebrafish, token is optional (we use public precomputed data)
-                        # For human, token is required
-                        if species == "human":
-                            raise ValueError(
-                                f"\n{'='*70}\n"
-                                f"ERROR: CAVECLIENT_TOKEN not found!\n"
-                                f"{'='*70}\n"
-                                f"The {species} dataset requires authentication.\n\n"
-                                f"To fix this:\n"
-                                f"1. Make sure you have a .env file in the project root with:\n"
-                                f"   CAVECLIENT_TOKEN=your_token_here\n\n"
-                                f"2. If you don't have a token yet:\n"
-                                f"   a) Request access: https://forms.gle/tpbndoL1J6xB47KQ9\n"
-                                f"   b) After approval, get your token from:\n"
-                                f"      https://global.brain-wire-test.org/auth/api/v1/create_token\n"
-                                f"   c) Run: python scripts/setup_cave_auth.py\n\n"
-                                f"3. See .env.example for template\n"
-                                f"{'='*70}\n"
-                            )
-                        elif species == "zebrafish":
-                            if self.verbose:
-                                print(f"Note: CAVECLIENT_TOKEN not found. Using public data.")
-                                print(f"For advanced features, set up authentication (see README)")
-
-                    # Save token to CAVEclient's auth system if available
-                    if token:
-                        try:
-                            auth = caveclient.auth.AuthClient(server_address=server_address)
-                            auth.save_token(token=token, overwrite=True)
-                            if self.verbose:
-                                print(f"Saved authentication token to CAVEclient")
-                        except Exception as auth_error:
-                            if self.verbose:
-                                print(f"Warning: Could not save token to CAVEclient auth: {auth_error}")
-                                print("This may cause issues accessing authenticated CloudVolume resources")
-
-                    self.client = CAVEclient(self.datastack_name, server_address=server_address, auth_token=token) if token else None
-                else:
-                    self.client = CAVEclient(self.datastack_name)
-                
-                # Try to get paths from CAVEclient InfoService (if client is available)
-                if self.client:
-                    try:
-                        client_em_path = self.client.info.image_source()
-                        client_seg_path = self.client.info.segmentation_source()
-                        if self.verbose:
-                            print(f"Retrieved paths from CAVEclient InfoService:")
-                            print(f"  EM: {client_em_path}")
-                            print(f"  Segmentation: {client_seg_path}")
-                        # Use CAVEclient EM path if it's precomputed (for CloudVolume compatibility)
-                        if client_em_path.startswith("precomputed://"):
-                            self.em_path = client_em_path
-                        if client_seg_path.startswith("precomputed://") or client_seg_path.startswith("graphene://"):
-                            self.seg_path = client_seg_path
-                    except Exception as path_error:
-                        if self.verbose:
-                            print(f"Note: Could not retrieve paths from CAVEclient InfoService, using hardcoded paths: {path_error}")
-                
-                # Print success message if verbose is True
+                client_em_path = self.client.info.image_source()
+                client_seg_path = self.client.info.segmentation_source()
                 if self.verbose:
-                    print(f"Successfully initialized CAVEclient for {species} (datastack: {self.datastack_name})")
-            except Exception as e:
+                    print(f"Retrieved paths from CAVEclient InfoService:")
+                    print(f"  EM: {client_em_path}")
+                    print(f"  Segmentation: {client_seg_path}")
+                if client_em_path.startswith("precomputed://") or client_em_path.startswith("graphene://"):
+                    self.em_path = client_em_path
+                if client_seg_path.startswith("precomputed://") or client_seg_path.startswith("graphene://"):
+                    self.seg_path = client_seg_path
+            except Exception as path_error:
                 if self.verbose:
-                    print(f"Warning: Could not initialize CAVEclient for {species} (datastack: {self.datastack_name}): {e}")
-                self.client = None
+                    print(f"Note: Could not retrieve paths from CAVEclient InfoService, using hardcoded paths: {path_error}")
+
+            if self.verbose:
+                print(f"Successfully initialized CAVEclient for {species} (datastack: {self.datastack_name})")
         else:
             self.client = None
         
@@ -285,38 +257,22 @@ class ConnectomeVisualizer:
     def _connect_to_data_sources(self):
         """Connect to the EM and segmentation data sources."""
         try:
+            # Connect to EM data
             self.cv_em = cloudvolume.CloudVolume(self.em_path, use_https=True, mip=self.em_mip, timestamp=self.timestamp)
             self.em_resolution = self.cv_em.resolution
 
-            # For authenticated graphene:// endpoints (H01, Fish1), pass the auth token to CloudVolume
-            # CloudVolume needs the token in its secrets to authenticate with the graphene backend
-            if self.seg_path.startswith("graphene://") and self.species in ["human", "zebrafish"]:
-                token = os.getenv("CAVECLIENT_TOKEN")
-                if token:
-                    # Pass token as secrets parameter - CloudVolume will use it for authentication
-                    self.cv_seg = cloudvolume.CloudVolume(
-                        self.seg_path,
-                        use_https=True,
-                        fill_missing=True,
-                        mip=self.seg_mip,
-                        timestamp=self.timestamp,
-                        secrets={'token': token}  # Pass CAVE token for graphene auth
-                    )
-                    if self.verbose:
-                        print(f"Created CloudVolume segmentation with authentication token")
-                else:
-                    # No token available - will likely fail for authenticated endpoints
-                    self.cv_seg = cloudvolume.CloudVolume(
-                        self.seg_path,
-                        use_https=True,
-                        fill_missing=True,
-                        mip=self.seg_mip,
-                        timestamp=self.timestamp
-                    )
-                    if self.verbose:
-                        print(f"Warning: No auth token available for authenticated graphene endpoint")
+            # Connect to segmentation data
+            # Pass auth token to CloudVolume if available (for authenticated graphene:// endpoints)
+            if self.auth_token:
+                self.cv_seg = cloudvolume.CloudVolume(
+                    self.seg_path,
+                    use_https=True,
+                    fill_missing=True,
+                    mip=self.seg_mip,
+                    timestamp=self.timestamp,
+                    secrets={'token': self.auth_token}
+                )
             else:
-                # Public endpoints don't need auth
                 self.cv_seg = cloudvolume.CloudVolume(
                     self.seg_path,
                     use_https=True,
@@ -1741,6 +1697,30 @@ Args:
             raise ValueError(f"Edit history retrieval requires CAVEclient, which is not initialized for {self.species}.{auth_msg}")
         
         return self.client.chunkedgraph.get_tabular_change_log(neuron_id, filtered=True)
+
+    def is_neuron_id_valid(self, neuron_id: int) -> bool:
+        """
+        Check if a neuron ID is valid and can be loaded for the current species.
+        
+        This method attempts to load the neuron mesh to verify it exists and is accessible.
+        
+        Args:
+            neuron_id: The neuron ID to validate
+            
+        Returns:
+            True if the neuron ID is valid and can be loaded, False otherwise
+        """
+        try:
+            with suppress_stdout():
+                # Try to get the mesh - if it succeeds, the neuron ID is valid
+                mesh = self.cv_seg.mesh.get(neuron_id)
+                if neuron_id in mesh and mesh[neuron_id] is not None:
+                    return True
+                return False
+        except Exception as e:
+            if self.verbose:
+                print(f"Neuron ID {neuron_id} is not valid: {e}")
+            return False
 
     def clear_neurons(self):
         """Reset the state related to loaded neurons and clear figures."""

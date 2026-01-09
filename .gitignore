@@ -82,3 +82,7 @@ debug/
 *.parquet
 jeff_quilee_1on1.mp4
 cave-scripts-master/
+
+# Claude AI
+.claude*
+.swarm/*

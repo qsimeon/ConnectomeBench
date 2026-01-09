@@ -287,10 +287,46 @@ class ConnectomeVisualizer:
         try:
             self.cv_em = cloudvolume.CloudVolume(self.em_path, use_https=True, mip=self.em_mip, timestamp=self.timestamp)
             self.em_resolution = self.cv_em.resolution
-            
-            self.cv_seg = cloudvolume.CloudVolume(self.seg_path, use_https=True, fill_missing=True, mip=self.seg_mip, timestamp=self.timestamp)
+
+            # For authenticated graphene:// endpoints (H01, Fish1), pass the auth token to CloudVolume
+            # CloudVolume needs the token in its secrets to authenticate with the graphene backend
+            if self.seg_path.startswith("graphene://") and self.species in ["human", "zebrafish"]:
+                token = os.getenv("CAVECLIENT_TOKEN")
+                if token:
+                    # Pass token as secrets parameter - CloudVolume will use it for authentication
+                    self.cv_seg = cloudvolume.CloudVolume(
+                        self.seg_path,
+                        use_https=True,
+                        fill_missing=True,
+                        mip=self.seg_mip,
+                        timestamp=self.timestamp,
+                        secrets={'token': token}  # Pass CAVE token for graphene auth
+                    )
+                    if self.verbose:
+                        print(f"Created CloudVolume segmentation with authentication token")
+                else:
+                    # No token available - will likely fail for authenticated endpoints
+                    self.cv_seg = cloudvolume.CloudVolume(
+                        self.seg_path,
+                        use_https=True,
+                        fill_missing=True,
+                        mip=self.seg_mip,
+                        timestamp=self.timestamp
+                    )
+                    if self.verbose:
+                        print(f"Warning: No auth token available for authenticated graphene endpoint")
+            else:
+                # Public endpoints don't need auth
+                self.cv_seg = cloudvolume.CloudVolume(
+                    self.seg_path,
+                    use_https=True,
+                    fill_missing=True,
+                    mip=self.seg_mip,
+                    timestamp=self.timestamp
+                )
+
             self.seg_resolution = self.cv_seg.resolution
-            
+
             if self.verbose:
                 print("Successfully connected to data sources.")
         except Exception as e:

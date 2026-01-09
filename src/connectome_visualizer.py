@@ -9,12 +9,24 @@ import sys
 from typing import List, Dict, Tuple, Optional, Any
 import pandas as pd
 from scipy.spatial import cKDTree
+import caveclient
 from caveclient import CAVEclient
 from datetime import datetime, timezone
 import math
 import octarine as oc
 from PIL import Image
 from contextlib import contextmanager
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+# This looks for .env in the project root directory
+env_path = Path(__file__).parent.parent / ".env"
+if env_path.exists():
+    load_dotenv(env_path)
+else:
+    # If no .env file, try to load from current directory or parent directories
+    load_dotenv()
 
 
 @contextmanager
@@ -31,29 +43,32 @@ def suppress_stdout():
 class ConnectomeVisualizer:
     """
     A class for visualizing connectomics neurons and EM data.
-    
+
     Supports multiple species:
-    - mouse (MICrONS dataset)
-    - fly (FlyWire dataset)
+    - mouse (MICrONS dataset) - Public access
+    - fly (FlyWire dataset) - Public access
+    - zebrafish (Fish1 dataset) - Public precomputed data available
+      (Authentication optional for advanced CAVEclient features)
     - human (H01 dataset) - Requires authentication (see README)
-    - zebrafish (Fish1 dataset) - Requires authentication (see README)
-    
-    All species have full CAVEclient support once authenticated. The CAVEclient automatically
-    retrieves the correct EM and segmentation paths via its InfoService API. Hardcoded paths
-    are used as fallbacks if InfoService is unavailable.
-    
-    See README for authentication instructions for human and zebrafish datasets.
+
+    The CAVEclient automatically retrieves the correct EM and segmentation paths via its
+    InfoService API. For zebrafish, we use public precomputed segmentation data by default
+    for simplicity, though authenticated access to the graphene backend is available.
+
+    See README for authentication instructions for advanced features.
     """
     
     # Default paths for data sources
     MICRONS_EM_PATH = "precomputed://https://bossdb-open-data.s3.amazonaws.com/iarpa_microns/minnie/minnie65/em"
     FLYWIRE_EM_PATH = "precomputed://https://bossdb-open-data.s3.amazonaws.com/flywire/fafbv14"
+    FLYWIRE_SEG_PATH =  "graphene://https://prod.flywire-daf.com/segmentation/1.0/flywire_public" 
+    MICRONS_SEG_PATH = "graphene://https://minnie.microns-daf.com/segmentation/table/minnie65_public"
     # H01 (Human Cortex) - Requires authentication via https://h01-release.storage.googleapis.com/proofreading.html
     H01_EM_PATH = "precomputed://gs://h01-release/data/20210601/4nm_raw"
-    H01_SEG_PATH = "precomputed://gs://h01-release/data/20210601/c3"  # C3 is latest, C2 also available
-    # Fish1 (Zebrafish) - Requires authentication via https://fish1-release.storage.googleapis.com/tutorials.html
+    H01_SEG_PATH = "graphene://https://local.brain-wire-test.org/segmentation/table/h01_full0_v2"  # C3 is latest, C2 also available
+    # Fish1 (Zebrafish) - Public data available, authentication optional for advanced features
     FISH1_EM_PATH = "precomputed://gs://fish1-public/clahe_231218"
-    FISH1_SEG_PATH = "graphene://https://pcgv3local.brain-wire-test.org/segmentation/table/fish1_v250915"
+    FISH1_SEG_PATH = "graphene://https://pcgv3local.brain-wire-test.org/segmentation/table/fish1_v250915"  # Public precomputed segmentation
 
     # Default colors for neurons
     NEURON_COLORS = [
@@ -72,9 +87,6 @@ class ConnectomeVisualizer:
     ]
 
     datastacks = ['minnie65_public', 'flywire_fafb_public', 'h01_c3_flat', 'fish1_full']
-
-    FLYWIRE_SEG_PATH =  "graphene://https://prod.flywire-daf.com/segmentation/1.0/flywire_public" 
-    MICRONS_SEG_PATH = "graphene://https://minnie.microns-daf.com/segmentation/table/minnie65_public"
 
     data_parameters = {
         "mouse": {
@@ -157,44 +169,77 @@ class ConnectomeVisualizer:
         # Note: Human (H01) and Zebrafish (Fish1) require authentication before use - see README
         if self.datastack_name is not None:
             try:
-                # H01 and Fish1 use a different server address
+                # H01 and Fish1 use a different server address and require authentication
                 if species in ["human", "zebrafish"]:
                     server_address = "https://global.brain-wire-test.org/"
-                    self.client = CAVEclient(self.datastack_name, server_address=server_address)
+
+                    # Check for CAVECLIENT_TOKEN
+                    token = os.getenv("CAVECLIENT_TOKEN")
+                    if not token:
+                        # For zebrafish, token is optional (we use public precomputed data)
+                        # For human, token is required
+                        if species == "human":
+                            raise ValueError(
+                                f"\n{'='*70}\n"
+                                f"ERROR: CAVECLIENT_TOKEN not found!\n"
+                                f"{'='*70}\n"
+                                f"The {species} dataset requires authentication.\n\n"
+                                f"To fix this:\n"
+                                f"1. Make sure you have a .env file in the project root with:\n"
+                                f"   CAVECLIENT_TOKEN=your_token_here\n\n"
+                                f"2. If you don't have a token yet:\n"
+                                f"   a) Request access: https://forms.gle/tpbndoL1J6xB47KQ9\n"
+                                f"   b) After approval, get your token from:\n"
+                                f"      https://global.brain-wire-test.org/auth/api/v1/create_token\n"
+                                f"   c) Run: python scripts/setup_cave_auth.py\n\n"
+                                f"3. See .env.example for template\n"
+                                f"{'='*70}\n"
+                            )
+                        elif species == "zebrafish":
+                            if self.verbose:
+                                print(f"Note: CAVECLIENT_TOKEN not found. Using public data.")
+                                print(f"For advanced features, set up authentication (see README)")
+
+                    # Save token to CAVEclient's auth system if available
+                    if token:
+                        try:
+                            auth = caveclient.auth.AuthClient(server_address=server_address)
+                            auth.save_token(token=token, overwrite=True)
+                            if self.verbose:
+                                print(f"Saved authentication token to CAVEclient")
+                        except Exception as auth_error:
+                            if self.verbose:
+                                print(f"Warning: Could not save token to CAVEclient auth: {auth_error}")
+                                print("This may cause issues accessing authenticated CloudVolume resources")
+
+                    self.client = CAVEclient(self.datastack_name, server_address=server_address, auth_token=token) if token else None
                 else:
                     self.client = CAVEclient(self.datastack_name)
                 
-                # Try to get paths from CAVEclient InfoService (more reliable than hardcoded)
-                try:
-                    client_em_path = self.client.info.image_source()
-                    client_seg_path = self.client.info.segmentation_source()
-                    if self.verbose:
-                        print(f"Retrieved paths from CAVEclient InfoService:")
-                        print(f"  EM: {client_em_path}")
-                        print(f"  Segmentation: {client_seg_path}")
-                    # Use CAVEclient EM path if it's precomputed (for CloudVolume compatibility)
-                    if client_em_path.startswith("precomputed://"):
-                        self.em_path = client_em_path
-                    # For segmentation: use CAVEclient path (graphene:// or precomputed://)
-                    # Note: graphene:// paths work with CloudVolume and are required for mesh data
-                    # in some datasets (e.g., H01, Fish1) where precomputed paths lack mesh manifests
-                    if client_seg_path.startswith("precomputed://") or client_seg_path.startswith("graphene://"):
-                        self.seg_path = client_seg_path
-                except Exception as path_error:
-                    if self.verbose:
-                        print(f"Note: Could not retrieve paths from CAVEclient InfoService, using hardcoded paths: {path_error}")
+                # Try to get paths from CAVEclient InfoService (if client is available)
+                if self.client:
+                    try:
+                        client_em_path = self.client.info.image_source()
+                        client_seg_path = self.client.info.segmentation_source()
+                        if self.verbose:
+                            print(f"Retrieved paths from CAVEclient InfoService:")
+                            print(f"  EM: {client_em_path}")
+                            print(f"  Segmentation: {client_seg_path}")
+                        # Use CAVEclient EM path if it's precomputed (for CloudVolume compatibility)
+                        if client_em_path.startswith("precomputed://"):
+                            self.em_path = client_em_path
+                        if client_seg_path.startswith("precomputed://") or client_seg_path.startswith("graphene://"):
+                            self.seg_path = client_seg_path
+                    except Exception as path_error:
+                        if self.verbose:
+                            print(f"Note: Could not retrieve paths from CAVEclient InfoService, using hardcoded paths: {path_error}")
                 
+                # Print success message if verbose is True
                 if self.verbose:
                     print(f"Successfully initialized CAVEclient for {species} (datastack: {self.datastack_name})")
             except Exception as e:
                 if self.verbose:
                     print(f"Warning: Could not initialize CAVEclient for {species} (datastack: {self.datastack_name}): {e}")
-                    if species == "human":
-                        print(f"  Note: Human (H01) requires authentication. See README:")
-                        print(f"    https://h01-release.storage.googleapis.com/proofreading.html")
-                    elif species == "zebrafish":
-                        print(f"  Note: Zebrafish (Fish1) requires authentication. See README:")
-                        print(f"    https://fish1-release.storage.googleapis.com/tutorials.html")
                 self.client = None
         else:
             self.client = None

@@ -49,6 +49,7 @@ htmlcov/
 # Project specific
 output/
 data/
+test_data*/
 figures/
 reports/
 annotation/

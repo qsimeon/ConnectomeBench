@@ -39,7 +39,7 @@ if __name__ == "__main__":
     parser.add_argument('--data-gen-modes', nargs='+', default=["", "_first_only"],
                       help='List of data generation modes')
     parser.add_argument('--species', nargs='+', default=["fly", "mouse"],
-                      help='List of species to process')
+                      help='List of species to process (fly, mouse, human, zebrafish)')
     parser.add_argument('--use-descriptions', nargs='+', type=bool, default=[False, True],
                       help='List of boolean flags for using descriptions')
     parser.add_argument('--models', nargs='+', 
@@ -80,8 +80,18 @@ if __name__ == "__main__":
                         neuron_ids = list(global_visualizer.client.materialize.query_table('proofreading_status_and_strategy')['valid_id'])
                     elif species == "fly":
                         neuron_ids = list(global_visualizer.client.materialize.query_table('proofread_neurons')['pt_root_id'])
+                    elif species == "human" or species == "zebrafish":
+                        # Use get_delta_roots() to find neurons with edit history
+                        from datetime import datetime, timezone
+                        start_time = datetime(2020, 1, 1, tzinfo=timezone.utc)
+                        end_time = datetime(2025, 12, 31, tzinfo=timezone.utc)
+                        old_roots, new_roots = global_visualizer.client.chunkedgraph.get_delta_roots(start_time, end_time)
+                        neuron_ids = list(set(new_roots))
+                        print(f"Found {len(neuron_ids)} edited neurons via get_delta_roots()")
+                    else:
+                        raise ValueError(f"Unknown species: {species}")
 
-                    neuron_ids = random.sample(neuron_ids, num_neurons)
+                    neuron_ids = random.sample(neuron_ids, min(num_neurons, len(neuron_ids)))
                     edit_history = global_visualizer.get_edit_history(neuron_ids)
 
                     data = []

@@ -996,7 +996,7 @@ def main():
     parser.add_argument("--max-workers", type=int, default=None, help="Maximum number of parallel workers (threads). Defaults to CPU count or 4.")
     parser.add_argument("--views", nargs='+', choices=['front', 'side', 'top'], default=['front', 'side', 'top'], help="Specify which views to include (e.g., --views front side). Defaults to all.")
     parser.add_argument("--task", type=str, choices=['split_comparison', 'split_identification'], default='split_comparison', help="Specify the evaluation task to perform.")
-    parser.add_argument("--species", type=str, choices=['mouse', 'fly'], default='mouse', help="Specify the species to use for the output directory.")
+    parser.add_argument("--species", type=str, choices=['mouse', 'fly', 'human', 'zebrafish'], default='mouse', help="Specify the species to use for the output directory.")
     parser.add_argument("--zoom-margin", type=int, default=1024, help="Specify the zoom margin to use for the output directory.")
     parser.add_argument("--models", nargs='+', default=["claude-3-7-sonnet-20250219"], help="Specify one or more models to use for evaluation.")
     parser.add_argument("--prompt-modes", nargs='+', default=['informative'], help="Specify one or more prompt modes to use for evaluation.")

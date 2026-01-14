@@ -25,6 +25,9 @@ venv/
 env/
 ENV/
 
+# Environment variables (contains API keys and tokens)
+.env
+
 # IDE
 .idea/
 .vscode/
@@ -46,6 +49,7 @@ htmlcov/
 # Project specific
 output/
 data/
+test_data*/
 figures/
 reports/
 annotation/
@@ -72,9 +76,14 @@ scripts/split_json_to_jsonl.py
 scripts/test_parquet.py
 scripts/README_generated.md
 scripts/generate_readme_yaml.py
+scripts/model-post-training/
+scripts/deprecated/
 
 debug/
 *.parquet
+jeff_quilee_1on1.mp4
+cave-scripts-master/
 
-scripts/model-post-training/
-scripts/deprecated/
+# Claude AI
+.claude*
+.swarm/*

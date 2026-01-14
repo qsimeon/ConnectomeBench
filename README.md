@@ -71,7 +71,7 @@ Results are saved as CSV files with accuracy metrics when ground truth is availa
 
 The toolkit provides several scripts for processing connectome data from scratch:
 
-- `scripts/get_data.py`: Gather training data from MICrONS, FlyWire or Fish1 edit histories
+- `scripts/get_data.py`: Gather training data from MICrONS or FlyWire edit histories
 - `scripts/split_resolution.py`: Process and evaluate split error resolution tasks
 - `scripts/merge_resolution.py`: Process and evaluate merge error detection tasks
 - `scripts/segmentation_classification.py`: Classify segmentations
@@ -83,81 +83,15 @@ The `ConnectomeVisualizer` class provides tools for visualizing neurons and EM d
 ```python
 from src.connectome_visualizer import ConnectomeVisualizer
 
-# Initialize visualizer for any supported species
-visualizer = ConnectomeVisualizer(species="zebrafish")  # or "mouse", "fly", "human", "zebrafish"
+# Initialize visualizer
+visualizer = ConnectomeVisualizer(species="mouse")
 
 # Load and visualize neurons
 visualizer.load_neurons([864691134965949727])
 visualizer.save_3d_views(base_filename="3d_neuron_mesh")
 ```
 
-### Dataset Access and Authentication
-
-The toolkit supports multiple connectomics datasets with varying access requirements:
-
-#### Mouse (MICrONS) and Fly (FlyWire)
-These datasets are generally publicly accessible and do not require special authentication.
-
-#### Human (H01) and Zebrafish (Fish1)
-These datasets require authentication with the CAVE (Connectome Annotation Versioning Engine) system.
-
-**Quick Setup (Automated):**
-
-```bash
-# 1. Install dependencies (if not already done)
-pip install -e .
-
-# 2. Run the authentication setup script
-python scripts/setup_cave_auth.py
-```
-
-The script will guide you through the authentication process.
-
-**Manual Setup:**
-
-1. **Request Access**
-   - Fill out the access request form: https://forms.gle/tpbndoL1J6xB47KQ9
-   - You will receive approval within 24 hours from the Lichtman Lab team
-
-2. **Get Your Token**
-   - After approval, visit ONE of these URLs (log in with the Gmail account you used in the form):
-     - For NEW users: https://global.brain-wire-test.org/auth/api/v1/create_token
-     - For EXISTING users: https://global.brain-wire-test.org/auth/api/v1/user/token
-   - Copy the token (it looks like: `4836d842ee67473399ca468f61d773ff`)
-
-3. **Configure Environment**
-   - Create a `.env` file in the project root (see `.env.example` for template):
-     ```bash
-     # Copy the example file
-     cp .env.example .env
-
-     # Edit .env and add your token
-     CAVECLIENT_TOKEN=your_token_here
-     ```
-
-4. **Verify Setup**
-   ```python
-   from src.connectome_visualizer import ConnectomeVisualizer
-
-   # This will now work without authentication errors
-   visualizer = ConnectomeVisualizer(species="zebrafish")
-   ```
-
-**Environment Variables:**
-
-The toolkit uses a `.env` file to manage API keys and tokens. See `.env.example` for a complete list of supported variables:
-
-- `CAVECLIENT_TOKEN` - Required for H01 and Fish1 datasets
-- `OPENAI_API_KEY` - For GPT models (benchmark evaluation)
-- `ANTHROPIC_API_KEY` - For Claude models (benchmark evaluation)
-- `GEMINI_API_KEY` - For Gemini models (benchmark evaluation)
-- `HF_TOKEN` - For HuggingFace datasets
-
-**Additional Resources:**
-
-- [H01 Proofreading Page](https://h01-release.storage.googleapis.com/proofreading.html) - Detailed documentation on the proofreading methodology
-- [Fish1 Tutorials](https://fish1-release.storage.googleapis.com/tutorials.html) - Zebrafish dataset tutorials
-- [CAVEClient Documentation](https://github.com/CAVEconnectome/CAVEclient/) - Core data access library
+`ConnectomeVisualizer` is built largely on the data organized and provided through the [`CAVEClient`](https://github.com/CAVEconnectome/CAVEclient/) library. To get access to the data, please see the [CAVEClient README](https://github.com/CAVEconnectome/CAVEclient/). Specifically, you will need authentication tokens to access to the datasets (see the link [here](https://caveconnectome.github.io/CAVEclient/tutorials/authentication/)).
 
 ### LLM Integration
 

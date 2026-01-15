@@ -32,6 +32,9 @@ from typing import List, Dict, Any, Optional
 import caveclient
 from tqdm import tqdm
 import random
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')  # Non-interactive backend for saving figures
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -98,7 +101,6 @@ def get_proofread_neurons(species: str, auth_token: Optional[str] = None) -> Lis
     neuron_ids = list(table[config['neuron_id_column']])
 
     print(f"✓ Found {len(neuron_ids):,} proofread neurons")
-    print(f"  Expected: ~{config['expected_neuron_count']:,}")
 
     if len(neuron_ids) == 0:
         raise ValueError(f"No proofread neurons found for {species}!")
@@ -148,7 +150,7 @@ def analyze_edit_history(edit_history) -> Dict[str, Any]:
             "split_percentage": 0,
         }
 
-    # Convert dict to DataFrame if needed (some CAVEclient versions return dict)
+    # Convert dict to DataFrame if needed (CAVEclient returns dict with neuron_id as key)
     if isinstance(edit_history, dict):
         if len(edit_history) == 0:
             return {
@@ -158,7 +160,8 @@ def analyze_edit_history(edit_history) -> Dict[str, Any]:
                 "merge_percentage": 0,
                 "split_percentage": 0,
             }
-        edit_history = pd.DataFrame([edit_history])
+        # Extract the DataFrame from the dict (key is neuron_id, value is DataFrame)
+        edit_history = list(edit_history.values())[0]
 
     if len(edit_history) == 0:
         return {
@@ -328,6 +331,114 @@ def extrapolate_to_full_dataset(sample_stats: Dict[str, Any],
     }
 
 
+def create_visualizations(df: pd.DataFrame, summary_stats: Dict[str, Any],
+                         species: str, sample_size: int, output_dir: Path) -> None:
+    """
+    Create visualizations of edit distribution statistics.
+
+    Args:
+        df: DataFrame with edit statistics per neuron
+        summary_stats: Dictionary with summary statistics
+        species: Dataset species
+        sample_size: Number of neurons in sample
+        output_dir: Directory to save figures
+    """
+    # Create figures directory
+    figures_dir = output_dir / "figures"
+    figures_dir.mkdir(parents=True, exist_ok=True)
+
+    # Get statistics
+    per_neuron = summary_stats["per_neuron_stats"]
+    edit_totals = summary_stats["edit_totals"]
+    distribution = summary_stats["distribution"]
+
+    # Create a 2x2 subplot figure
+    fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+    fig.suptitle(f'Edit Distribution Analysis - {species.upper()} (n={sample_size})',
+                 fontsize=16, fontweight='bold')
+
+    # ---- Plot 1: Histogram of edits per neuron ----
+    ax1 = axes[0, 0]
+    ax1.hist(df['total_edits'], bins=30, color='steelblue', alpha=0.7, edgecolor='black')
+    ax1.axvline(per_neuron['mean_edits'], color='red', linestyle='--', linewidth=2, label=f'Mean: {per_neuron["mean_edits"]:.0f}')
+    ax1.axvline(per_neuron['median_edits'], color='orange', linestyle='--', linewidth=2, label=f'Median: {per_neuron["median_edits"]:.0f}')
+    ax1.set_xlabel('Edits per Neuron', fontsize=11, fontweight='bold')
+    ax1.set_ylabel('Frequency', fontsize=11, fontweight='bold')
+    ax1.set_title('Distribution of Edits per Neuron', fontsize=12, fontweight='bold')
+    ax1.legend()
+    ax1.grid(axis='y', alpha=0.3)
+
+    # ---- Plot 2: Merge vs Split bar chart ----
+    ax2 = axes[0, 1]
+    merge_count = edit_totals['total_merges']
+    split_count = edit_totals['total_splits']
+    merge_pct = edit_totals['merge_percentage']
+    split_pct = edit_totals['split_percentage']
+
+    bars = ax2.bar(['Merge', 'Split'], [merge_count, split_count],
+                   color=['#ff6b6b', '#4ecdc4'], alpha=0.8, edgecolor='black')
+    ax2.set_ylabel('Total Operations', fontsize=11, fontweight='bold')
+    ax2.set_title('Merge vs Split Operations', fontsize=12, fontweight='bold')
+    ax2.grid(axis='y', alpha=0.3)
+
+    # Add percentage labels on bars
+    for i, (bar, pct) in enumerate(zip(bars, [merge_pct, split_pct])):
+        height = bar.get_height()
+        ax2.text(bar.get_x() + bar.get_width()/2., height,
+                f'{pct:.1f}%\n({int(height):,})',
+                ha='center', va='bottom', fontsize=10, fontweight='bold')
+
+    # ---- Plot 3: Box plot of edit distribution ----
+    ax3 = axes[1, 0]
+    bp = ax3.boxplot([df['total_edits']], vert=True, patch_artist=True, widths=0.5)
+    bp['boxes'][0].set_facecolor('lightblue')
+    bp['boxes'][0].set_edgecolor('black')
+    bp['medians'][0].set_color('red')
+    bp['medians'][0].set_linewidth(2)
+
+    ax3.set_ylabel('Edits per Neuron', fontsize=11, fontweight='bold')
+    ax3.set_title('Edit Distribution Statistics', fontsize=12, fontweight='bold')
+    ax3.set_xticks([1])
+    ax3.set_xticklabels(['All Neurons'])
+    ax3.grid(axis='y', alpha=0.3)
+
+    # Add percentile annotations
+    percentiles = distribution['percentiles']
+    ax3.text(1.3, percentiles['p25'], f"Q1: {percentiles['p25']:.0f}", va='center', fontsize=9)
+    ax3.text(1.3, percentiles['p50'], f"Median: {percentiles['p50']:.0f}", va='center', fontsize=9, color='red', fontweight='bold')
+    ax3.text(1.3, percentiles['p75'], f"Q3: {percentiles['p75']:.0f}", va='center', fontsize=9)
+    ax3.text(1.3, percentiles['p95'], f"P95: {percentiles['p95']:.0f}", va='center', fontsize=9, color='darkred')
+
+    # ---- Plot 4: Heavy-tail analysis scatter plot ----
+    ax4 = axes[1, 1]
+    sorted_edits = df['total_edits'].sort_values(ascending=False).reset_index(drop=True)
+    heavy_tail_threshold = distribution['heavy_tail']['threshold']
+
+    # Color neurons above heavy-tail threshold differently
+    colors = ['red' if x >= heavy_tail_threshold else 'steelblue' for x in sorted_edits]
+    ax4.scatter(range(len(sorted_edits)), sorted_edits, c=colors, alpha=0.6, s=30)
+    ax4.axhline(heavy_tail_threshold, color='red', linestyle='--', linewidth=2,
+               label=f'Heavy-tail (P95): {heavy_tail_threshold:.0f}')
+    ax4.axhline(per_neuron['mean_edits'], color='orange', linestyle='--', linewidth=1,
+               label=f'Mean: {per_neuron["mean_edits"]:.0f}')
+
+    ax4.set_xlabel('Neuron Rank (sorted by edit count)', fontsize=11, fontweight='bold')
+    ax4.set_ylabel('Edits per Neuron', fontsize=11, fontweight='bold')
+    ax4.set_title(f'Heavy-Tail Pattern ({distribution["heavy_tail"]["neuron_count"]} neurons = {distribution["heavy_tail"]["percentage"]:.1f}%)',
+                 fontsize=12, fontweight='bold')
+    ax4.legend()
+    ax4.grid(alpha=0.3)
+
+    plt.tight_layout()
+
+    # Save figure
+    figure_path = figures_dir / f"edit_distribution_{species}_n{sample_size}.png"
+    plt.savefig(figure_path, dpi=300, bbox_inches='tight')
+    plt.close()
+
+    print(f"✓ Saved visualization to {figure_path}")
+
+
 # ============================================================================
 # Main
 # ============================================================================
@@ -431,6 +542,9 @@ def main():
         with open(output_file, 'w') as f:
             json.dump(results, f, indent=2)
         print(f"\n✓ Saved report to {output_file}")
+
+        # Create visualizations
+        create_visualizations(edit_df, summary_stats, args.species, sample_size, args.output_dir)
 
         # Print summary
         print(f"\n{'='*70}")

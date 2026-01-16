@@ -46,13 +46,14 @@ from src.connectome_visualizer import ConnectomeVisualizer
 # Configuration
 # ============================================================================
 
+# NOTE: We are currently not making use of the expected_neuron_count parameter in our calculations.
 DATASET_CONFIG = {
     "mouse": {
         "datastack": "minnie65_public",
         "server": None,  # Uses default
         "proofread_table": "proofreading_status_and_strategy",
-        "neuron_id_column": "valid_id",
-        "expected_neuron_count": 200000,  # ~200k reported in MICrONS paper
+        "neuron_id_column": "pt_root_id",
+        "expected_neuron_count": 200000,  # ~200k reported in MICrONS paper 
     },
     "fly": {
         "datastack": "flywire_fafb_public",
@@ -68,12 +69,14 @@ DATASET_CONFIG = {
 # Data Collection Functions
 # ============================================================================
 
-def get_proofread_neurons(species: str, auth_token: Optional[str] = None) -> List[int]:
+def get_proofread_neurons(species: str, table_name: Optional[str] = None,
+                         auth_token: Optional[str] = None) -> List[int]:
     """
     Get list of all proofread neurons for a given species.
 
     Args:
         species: Dataset to query ("mouse" or "fly")
+        table_name: Optional table name to query (default: uses species config)
         auth_token: Optional authentication token for restricted datasets
 
     Returns:
@@ -81,9 +84,17 @@ def get_proofread_neurons(species: str, auth_token: Optional[str] = None) -> Lis
     """
     config = DATASET_CONFIG[species]
 
+    # Determine which table to use
+    query_table_name = table_name if table_name else config["proofread_table"]
+
+    # Always use pt_root_id for neuron IDs
+    neuron_id_column = config.get("neuron_id_column", "pt_root_id")
+
     print(f"\n{'='*70}")
-    print(f"Getting proofread neurons for {species.upper()}")
+    print(f"Getting neurons for {species.upper()}")
     print(f"{'='*70}")
+    print(f"Table: {query_table_name}")
+    print(f"Column: {neuron_id_column}")
 
     # Initialize CAVEclient
     if config["server"]:
@@ -95,15 +106,44 @@ def get_proofread_neurons(species: str, auth_token: Optional[str] = None) -> Lis
     else:
         client = caveclient.CAVEclient(config["datastack"])
 
-    # Query proofread neurons table
-    print(f"Querying {config['proofread_table']} table...")
-    table = client.materialize.query_table(config['proofread_table'])
-    neuron_ids = list(table[config['neuron_id_column']])
+    # Validate table exists
+    try:
+        available_tables = client.materialize.get_tables()
+        if query_table_name not in available_tables:
+            raise ValueError(
+                f"Table '{query_table_name}' not found in {config['datastack']}.\n"
+                f"Available tables: {', '.join(available_tables[:10])}... (showing first 10)\n"
+                f"See full list at: https://www.microns-explorer.org/ or https://www.flywire.ai/"
+            )
+    except Exception as e:
+        if "not found" in str(e):
+            raise
+        print(f"Warning: Could not validate table existence: {e}")
 
-    print(f"✓ Found {len(neuron_ids):,} proofread neurons")
+    # Query table
+    print(f"\nQuerying {query_table_name} table...")
+    try:
+        table = client.materialize.query_table(query_table_name)
+    except Exception as e:
+        raise ValueError(
+            f"Error querying table '{query_table_name}': {e}\n"
+            f"Make sure the table name is correct and accessible."
+        )
+
+    # Validate column exists
+    if neuron_id_column not in table.columns:
+        raise ValueError(
+            f"Column '{neuron_id_column}' not found in table '{query_table_name}'.\n"
+            f"Available columns: {', '.join(table.columns)}\n"
+            f"Specify the correct column with --column flag."
+        )
+
+    neuron_ids = list(table[neuron_id_column])
+
+    print(f"✓ Found {len(neuron_ids):,} neurons")
 
     if len(neuron_ids) == 0:
-        raise ValueError(f"No proofread neurons found for {species}!")
+        raise ValueError(f"No neurons found in {query_table_name}!")
 
     return neuron_ids
 
@@ -477,6 +517,12 @@ def main():
         default=Path("reports/edit_distributions"),
         help="Output directory for reports (default: reports/edit_distributions)"
     )
+    parser.add_argument(
+        "--table",
+        type=str,
+        default=None,
+        help="Optional: Specify alternative table name (default: uses species default from config)"
+    )
 
     args = parser.parse_args()
 
@@ -488,7 +534,7 @@ def main():
     np.random.seed(args.random_seed)
 
     # Get all proofread neurons
-    all_neurons = get_proofread_neurons(args.species)
+    all_neurons = get_proofread_neurons(args.species, table_name=args.table)
 
     # Determine which sample sizes to run
     if args.full_dataset:

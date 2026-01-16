@@ -11,14 +11,24 @@ and calculates statistics on:
 This data is used to estimate computational costs for AI-based proofreading systems.
 
 Usage:
-    # Analyze mouse (MICrONS) dataset
-    python analysis/analyze_edit_distributions.py --species mouse --sample-sizes 100 1000 5000
+    # Analyze mouse (MICrONS) dataset with default table
+    python analysis/analyze_edit_distributions.py --species mouse --sample-sizes 100 1000
+
+    # Use alternative neuron table (e.g., larger validated neuron set)
+    python analysis/analyze_edit_distributions.py --species mouse --table nucleus_ref_neuron_svm --sample-sizes 100
 
     # Analyze fly (FlyWire) dataset
     python analysis/analyze_edit_distributions.py --species fly --sample-sizes 100 1000
 
-    # Get full dataset stats (no sampling)
+    # Get full dataset stats (no sampling, slow!)
     python analysis/analyze_edit_distributions.py --species mouse --full-dataset
+
+Mouse neuron tables:
+    - proofreading_status_and_strategy (default, ~2.3k extensively proofread neurons)
+    - nucleus_ref_neuron_svm (~144k SVM-validated neurons)
+    - aibs_metamodel_celltypes_v661 (~94k cell-type classified neurons)
+
+Documentation: https://www.microns-explorer.org/
 """
 
 import sys

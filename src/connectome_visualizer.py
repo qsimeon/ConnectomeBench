@@ -1696,8 +1696,7 @@ Args:
                 auth_msg = " Please authenticate via https://fish1-release.storage.googleapis.com/tutorials.html"
             raise ValueError(f"Edit history retrieval requires CAVEclient, which is not initialized for {self.species}.{auth_msg}")
         
-        # Use filtered=False to get FULL edit history (not just most recent/significant edits)
-        return self.client.chunkedgraph.get_tabular_change_log(neuron_id, filtered=False)
+        return self.client.chunkedgraph.get_tabular_change_log(neuron_id, filtered=True)
 
     def is_neuron_id_valid(self, neuron_id: int) -> bool:
         """

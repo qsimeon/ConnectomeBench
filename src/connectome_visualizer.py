@@ -215,8 +215,8 @@ class ConnectomeVisualizer:
 
                 if self.verbose:
                     print(f"Retrieved paths from CAVEclient InfoService vs Hardcoded paths:")
-                    print(f"  EM:\n\t{client_em_path}\n\t{self.em_path}")
-                    print(f"  Segmentation:\n\t{client_seg_path}\n\t{self.seg_path}")
+                    print(f"  EM\n\tretrieved: {client_em_path}\n\thardcoded: {self.em_path}")
+                    print(f"  Segmentation\n\tretrieved: {client_seg_path}\n\thardcoded: {self.seg_path}")
 
             except Exception as path_error:
                 if self.verbose:

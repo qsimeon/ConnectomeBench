@@ -340,9 +340,6 @@ class TrainingDataGatherer:
         edits = [self.process_neuron_edit(neuron_id, row, split_only=split_only, merge_only=merge_only, edit_history=edit_history) for i, (_, row) in enumerate(edit_history_sampled.iterrows()) ]
         results = await asyncio.gather(*edits)
         edits = [result for result in results if result is not None]
-
-
-
         
         return edits
     

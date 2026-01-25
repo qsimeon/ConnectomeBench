@@ -63,14 +63,28 @@ DATASET_CONFIG = {
         "server": None,  # Uses default
         "proofread_table": "proofreading_status_and_strategy",
         "neuron_id_column": "pt_root_id",
-        "expected_neuron_count": 200000,  # ~200k reported in MICrONS paper 
+        "expected_neuron_count": 75_000,  # ~75k reported by MICRrONS (https://www.microns-explorer.org/cortical-mm3)
     },
     "fly": {
         "datastack": "flywire_fafb_public",
         "server": None,
         "proofread_table": "proofread_neurons",
         "neuron_id_column": "pt_root_id",
-        "expected_neuron_count": 10000,  # Approximate for FlyWire
+        "expected_neuron_count": 140_000,  # 139,255 proofread neurons for FlyWire
+    },
+    "human": {
+        "datastack": "h01_c3_flat",
+        "server": None,
+        "proofread_table": "proofreading_status_test", # only has 1 neuron
+        "neuron_id_column": "pt_root_id",
+        "expected_neuron_count": 38_000,  # Estimated number of neurons in H01 using 2/3 * 57,000 cells (https://h01-release.storage.googleapis.com/paper.html)
+    },
+    "zebrafish": {
+        "datastack": "fish1_full",
+        "server": None,
+        "proofread_table": "somas", # substitute, since this dataset has no proofreading table
+        "neuron_id_column": "pt_root_id",
+        "expected_neuron_count": 20_000,  # Lower bound estimated number of neurons in Fish1 (https://fish1-release.storage.googleapis.com/paper.html)
     },
 }
 

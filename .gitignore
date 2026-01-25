@@ -85,6 +85,7 @@ debug/
 *.parquet
 *.mp4
 cave-scripts-master/
+ConnectomeAgent.docx
 
 # Claude AI
 .claude*

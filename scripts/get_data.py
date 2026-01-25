@@ -571,7 +571,7 @@ if __name__ == "__main__":
         elif args.species == "mouse":
             server_address = "https://global.daf-apis.com"
             client = caveclient.CAVEclient("minnie65_public", server_address=server_address)
-            neuron_ids = list(client.materialize.query_table('proofreading_status_and_strategy')['valid_id'])
+            neuron_ids = list(client.materialize.query_table('proofreading_status_and_strategy')['pt_root_id'])
             random.seed(args.random_seed)
             neuron_ids = random.sample(neuron_ids, args.num_neurons)
         elif args.species == "human":

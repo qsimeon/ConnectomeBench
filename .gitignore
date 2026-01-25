@@ -86,6 +86,7 @@ debug/
 *.mp4
 cave-scripts-master/
 ConnectomeAgent.docx
+ConnectomeBench.pdf
 
 # Claude AI
 .claude*

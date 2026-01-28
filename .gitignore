@@ -87,7 +87,7 @@ debug/
 cave-scripts-master/
 ConnectomeAgent.docx
 ConnectomeBench.pdf
-
+ConnectomeVLM.pdf
 # Claude AI
 .claude*
 .swarm/*

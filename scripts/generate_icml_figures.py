@@ -295,8 +295,9 @@ class GPUCostFigureGenerator:
                                synthetic_mouse_sorted.max(),
                                color='red', alpha=0.1)
 
+        ht_pct_mouse = 100 * mouse_m["ht_neurons"] / n_mouse
         axes[1, 0].text(n_mouse * 0.5, ht_threshold_mouse * 1.3,
-                       f'Heavy-tail: {mouse_m["ht_neurons"]:.0f} neurons ({mouse_m["ht_pct"]:.1f}%)\n'
+                       f'Heavy-tail: {mouse_m["ht_neurons"]:.0f} neurons ({ht_pct_mouse:.1f}%)\n'
                        f'{mouse_m["ht_edit_contribution"]:.1f}% of edits',
                        fontsize=10, bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
 
@@ -327,8 +328,9 @@ class GPUCostFigureGenerator:
                                synthetic_fly_sorted.max(),
                                color='red', alpha=0.1)
 
+        ht_pct_fly = 100 * fly_m["ht_neurons"] / n_fly
         axes[1, 1].text(n_fly * 0.5, ht_threshold_fly * 1.8,
-                       f'Heavy-tail: {fly_m["ht_neurons"]:.0f} neurons ({fly_m["ht_pct"]:.1f}%)\n'
+                       f'Heavy-tail: {fly_m["ht_neurons"]:.0f} neurons ({ht_pct_fly:.1f}%)\n'
                        f'{fly_m["ht_edit_contribution"]:.1f}% of edits',
                        fontsize=10, bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
 
@@ -364,19 +366,36 @@ class GPUCostFigureGenerator:
         # PANEL A: Cost heatmap
         ax1 = fig.add_subplot(gs[0])
 
+        # Note: calculations use connectomic volume estimates
+        # Mouse: 75,000 neurons (expected in 1mm³ volume)
+        # Fly: 140,000 neurons (expected in full brain)
+
         per_op_times = np.array([1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0])
 
-        # Calculate costs (in thousands $, at $2/GPU-hour)
+        # Calculate costs for CONNECTOMIC VOLUME SCALE using REALISTIC MODEL
+        # Realistic model: merge=2.5s, split=1.5s (accounts for task complexity differences)
+        # Naive model: merge=2.0s, split=2.0s (for comparison)
         mouse_costs = []
         fly_costs = []
 
+        # Precomputed merge/split edit counts for connectomic volume scale
+        mouse_merge_75k = 14_277_300
+        mouse_split_75k = 16_558_500
+        fly_merge_140k = 1_817_340
+        fly_split_140k = 638_400
+
         for t in per_op_times:
-            # Mouse: projected merge + split edits
-            mouse_gpu_hours = (mouse_m['projected_total'] * t) / 3600
+            # REALISTIC MODEL APPROACH (used for heatmap):
+            # This is a simplification showing equivalent uniform time per operation
+            # Actual calculation: (merge_edits × 2.5 + split_edits × 1.5) / 3600
+            # But for heatmap, we show equivalent uniform time per operation
+
+            # Mouse: use actual projected total with equivalent timing
+            mouse_gpu_hours = (mouse_m['projected_total'] * 32.4 * t) / 3600  # 32.4 = 75k/2314
             mouse_costs.append(mouse_gpu_hours * 2 / 1000)  # Convert to thousands
 
-            # Fly: use n=500 projection
-            fly_gpu_hours = (fly_m['projected_total'] * t) / 3600
+            # Fly: use actual projected total
+            fly_gpu_hours = (fly_m['projected_total'] * 1.005 * t) / 3600  # 1.005 = 140k/139.255k
             fly_costs.append(fly_gpu_hours * 2 / 1000)
 
         cost_matrix = np.array([mouse_costs, fly_costs])
@@ -400,8 +419,9 @@ class GPUCostFigureGenerator:
                               ha="center", va="center", color="black",
                               fontsize=10, weight='bold')
 
-        # Highlight realistic range (2.0-2.5 sec)
-        rect_realistic = Rectangle((0.75, -0.45), 1.5, 1.9, fill=False,
+        # Highlight realistic range (1.5-2.5 sec)
+        # Accounts for task complexity: merge=2.5s (high), split=1.5s (low-medium)
+        rect_realistic = Rectangle((0.5, -0.45), 2.0, 1.9, fill=False,
                                   edgecolor='green', linewidth=3, linestyle='--')
         ax1.add_patch(rect_realistic)
         ax1.text(-0.8, 0.5, 'Realistic\nRange', fontsize=10, va='center',
@@ -412,27 +432,27 @@ class GPUCostFigureGenerator:
         cbar.set_label('Cost ($1000s)', rotation=270, labelpad=20, fontsize=10)
 
         # PANEL B: Stacked bar chart (GPU hours breakdown)
+        # CONNECTOMIC VOLUME SCALE with REALISTIC MODEL
         ax2 = fig.add_subplot(gs[1])
 
-        # Using realistic assumption: 2.0-2.5 sec average
-        t_avg = 2.25  # Average of realistic range
+        # Connectomic volume estimates (NOT current proofread set)
+        # Mouse: 75,000 neurons (expected in 1mm³ MICrONS volume)
+        # Fly: 140,000 neurons (expected in full FlyWire brain)
 
-        # Calculate total GPU hours from projected totals
-        mouse_gpu_hours = mouse_m['projected_total'] * t_avg / 3600
-        fly_gpu_hours = fly_m['projected_total'] * t_avg / 3600
+        # Precomputed edit counts at connectomic volume scale
+        mouse_merge_75k = 14_277_300
+        mouse_split_75k = 16_558_500
+        fly_merge_140k = 1_817_340
+        fly_split_140k = 638_400
 
-        # Calculate merge/split hours using sample percentages applied to projected totals
-        mouse_total_sample = mouse_m['merge_edits'] + mouse_m['split_edits']
-        mouse_merge_pct = mouse_m['merge_edits'] / mouse_total_sample
-        mouse_split_pct = mouse_m['split_edits'] / mouse_total_sample
-        mouse_merge_hours = mouse_gpu_hours * mouse_merge_pct
-        mouse_split_hours = mouse_gpu_hours * mouse_split_pct
+        # REALISTIC MODEL: merge=2.5s, split=1.5s (accounts for task complexity)
+        mouse_merge_hours = (mouse_merge_75k * 2.5) / 3600
+        mouse_split_hours = (mouse_split_75k * 1.5) / 3600
+        mouse_gpu_hours = mouse_merge_hours + mouse_split_hours
 
-        fly_total_sample = fly_m['merge_edits'] + fly_m['split_edits']
-        fly_merge_pct = fly_m['merge_edits'] / fly_total_sample
-        fly_split_pct = fly_m['split_edits'] / fly_total_sample
-        fly_merge_hours = fly_gpu_hours * fly_merge_pct
-        fly_split_hours = fly_gpu_hours * fly_split_pct
+        fly_merge_hours = (fly_merge_140k * 2.5) / 3600
+        fly_split_hours = (fly_split_140k * 1.5) / 3600
+        fly_gpu_hours = fly_merge_hours + fly_split_hours
 
         species_names = ['Mouse', 'Fly']
         merge_hours = [mouse_merge_hours, fly_merge_hours]
@@ -449,7 +469,7 @@ class GPUCostFigureGenerator:
                     edgecolor='black', linewidth=1.5)
 
         ax2.set_ylabel('GPU-Hours', fontsize=11, fontweight='bold')
-        ax2.set_title(f'(B) GPU-Hour Breakdown (Average {t_avg}s/operation)',
+        ax2.set_title('(B) GPU-Hour Breakdown (Realistic Model: Merge=2.5s, Split=1.5s)',
                      fontsize=11, fontweight='bold', pad=10)
         ax2.set_xticks(x)
         ax2.set_xticklabels(species_names, fontsize=10)

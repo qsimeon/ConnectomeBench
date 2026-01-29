@@ -47,15 +47,15 @@ We estimate proofreading costs at three extrapolation levels, progressing from c
 \textbf{Level 1:} & 2,314 & \multicolumn{2}{c|}{\$1,057 / \$1,038} & 139,255 & \multicolumn{2}{c}{\$2,714 / \$3,040} \\
 Current proofread & neurons & (529 / 519 GPU-hrs) & & neurons & (1,357 / 1,520 GPU-hrs) & \\
 \hline
-\textbf{Level 2:} & $\sim$75,000 & \multicolumn{2}{c|}{\$34,262 / \$33,628} & 139,255 & \multicolumn{2}{c}{\$2,729 / \$3,056} \\
-Connectome volume & neurons & (17,131 / 16,814 GPU-hrs) & & neurons & (1,364 / 1,528 GPU-hrs) & \\
+\textbf{Level 2:} & $\sim$75,000 & \multicolumn{2}{c|}{\$34,262 / \$33,628} & 139,255 & \multicolumn{2}{c}{\$2,714 / \$3,040} \\
+Connectome volume & neurons & (17,131 / 16,814 GPU-hrs) & & neurons & (1,357 / 1,520 GPU-hrs) & \\
 \hline
-\textbf{Level 3:} & $\sim$10,000,000 & \multicolumn{2}{c|}{\$4,568,266 / \$4,483,773} & 139,255 & \multicolumn{2}{c}{\$2,728 / \$3,056} \\
-Whole cortex/brain & neurons & (2,284,111 / 2,241,855 GPU-hrs) & & neurons & (1,364 / 1,528 GPU-hrs) & \\
+\textbf{Level 3:} & $\sim$10,000,000 & \multicolumn{2}{c|}{\$4,568,266 / \$4,483,773} & 139,255 & \multicolumn{2}{c}{\$2,714 / \$3,040} \\
+Whole cortex/brain & neurons & (2,284,133 / 2,241,886 GPU-hrs) & & neurons & (1,357 / 1,520 GPU-hrs) & \\
 \hline
 \multicolumn{7}{l}{\small Level 1 = current fully-analyzed proofread neurons; Level 2 = expected connectomic volume; Level 3 = hypothetical full-cortex extrapolation.}
 \end{tabular}
-\caption{\textbf{GPU Computational Cost Estimation: Three Extrapolation Scales × Two Models.} Naive model assumes uniform 2.0s per operation; Realistic model uses task-stratified times (merge=2.5s, split=1.5s). Mouse Level 2 assumes 75,000 expected neurons in 1~mm$^3$ based on MICrONS density; Fly Level 2-3 are identical since brain is fully proofread. Level 3 for mouse illustrates $4.3\times$ cost scaling for full mammalian cortex (112~mm$^3$, $\sim$10M neurons). GPU cost = \$2/hour. See Appendix A \& B for detailed derivations.}
+\caption{\textbf{GPU Computational Cost Estimation: Three Extrapolation Scales × Two Models.} Naive model assumes uniform 2.0s per operation; Realistic model uses task-stratified times (merge=2.5s, split=1.5s). Mouse Level 2 assumes 75,000 expected neurons in 1~mm$^3$ based on MICrONS density; Fly Level 2-3 are identical since brain is fully proofread. Level 3 for mouse illustrates significant cost scaling for full mammalian cortex (112~mm$^3$, $\sim$10M neurons). GPU cost = \$2/hour. See Appendix A \& B for detailed derivations.}
 \label{tab:cost_levels}
 \end{table}
 
@@ -76,15 +76,15 @@ The three levels reveal markedly different scaling profiles: mammalian proofread
 Main 4-panel figure combining heavy-tail distribution patterns (top) with computational cost analysis at connectomic scale (bottom).
 \textbf{(A) Heavy-Tail Edit Distribution.} Rank-ordered cumulative edit counts for mouse ($n=500$, dark gray) and fly ($n=1000$, light gray) on log scale, normalized to same x-axis for visual comparison. Dashed horizontal lines indicate $95$th percentile thresholds; inset annotation box reports heavy-tail concentration statistics. Mouse heavy-tail neurons ($24$ neurons, $4.8\%$ of sample, $>971$ edits) contribute only $14.1\%$ of total edits, indicating relatively uniform workload. Fly heavy-tail neurons ($47$ neurons, $4.7\%$ of sample, $>58$ edits) concentrate $33.3\%$ of total edits, revealing that fly proofreading workload is dominated by a small number of complex outliers---a $23.4\times$ difference in per-neuron baseline despite $2.4\times$ higher per-neuron concentration.
 \textbf{(B) Operation Type Distribution.} Stacked bar chart showing merge vs. split operation percentages for mouse ($46.3\%$ merge, $53.7\%$ split) and fly ($71.9\%$ merge, $28.1\%$ split) across full proofread populations ($2{,}314$ and $139{,}255$ neurons, respectively). Mouse's balanced merge/split ratio indicates comparable over- and under-segmentation errors in the initial volume; fly's merge-dominance reveals systematic oversegmentation in FAFB volume, requiring fragment consolidation as the dominant proofreading task. Mean edits per neuron noted below each species.
-\textbf{(C) Cost Landscape Heatmap.} 2D cost matrix (grayscale, vmax clipped to $50$K to preserve visibility across range) showing GPU cost dependency on per-operation inference time ($1.0$--$5.0$ seconds) at connectomic volume scale ($\sim75{,}000$ mouse neurons in $1$ mm$^3$; $\sim140{,}000$ fly neurons in full brain). Dashed rectangle highlights the realistic $1.5$--$2.5$ second range derived from task-stratified complexity analysis. White text on dark (mouse) and black text on light (fly) backgrounds ensure readability across the grayscale gradient. Cost estimates shown in \$K (thousands).
+\textbf{(C) Cost Landscape Heatmap.} 2D cost matrix (grayscale, vmax clipped to $50$K to preserve visibility across range) showing GPU cost dependency on per-operation inference time ($1.0$--$5.0$ seconds) at connectomic volume scale ($75{,}000$ mouse neurons in $1$ mm$^3$; $140{,}000$ fly neurons in full brain). Dashed rectangle highlights the realistic $1.5$--$2.5$ second range derived from task-stratified complexity analysis. White text on dark (mouse) and black text on light (fly) backgrounds ensure readability across the grayscale gradient. Cost estimates shown in \$K (thousands).
 \textbf{(D) GPU-Hour Breakdown (Naive Model, Connectomic Scale).} Stacked bar chart quantifying merge vs. split GPU-hours required for full-volume proofreading using naive uniform $2.0$ s per-operation model. Mouse: $9{,}199$ merge hours ($54\%$) + $7{,}937$ split hours ($46\%$) = $17{,}136$ total hours (\$$34{,}262$ cost). Fly: $1{,}018$ merge hours ($74\%$) + $370$ split hours ($26\%$) = $1{,}388$ total hours (\$$2{,}775$ cost). Fly annotations include line pointers to avoid label overlap. Despite fly's $23.4\times$ lower per-neuron effort, mouse requires $12.3\times$ more GPU-hours due to expected population size ($75$K vs $140$K neurons), demonstrating that deployment costs scale primarily with dataset volume rather than per-neuron complexity.}
 \label{fig:figure_gpu_cost_main}
 \end{figure}
 
 \textbf{Cost projections: Connectomic volume scale (Level 2 in Table~\ref{tab:cost_levels}).} Figure~\ref{fig:figure_gpu_cost_main}D shows GPU costs at the connectomic volume scale---expected neuron populations for deployments on each dataset---using the naive model (uniform $2.0$ s per operation) for simplicity. This represents typical computational loads for full-volume proofreading systems:
 \begin{itemize}
-\item \textbf{Mouse ($\sim75{,}000$ neurons in $1$ mm$^3$ MICrONS volume)}: $30{,}835{,}500$ total edits $\rightarrow$ $16{,}814$ GPU-hours, \$$33{,}628$ cost
-\item \textbf{Fly ($\sim140{,}000$ neurons in connectomic volume)}: $2{,}455{,}600$ total edits $\rightarrow$ $1{,}528$ GPU-hours, \$$3{,}056$ cost
+\item \textbf{Mouse (expected $75{,}000$ neurons in $1$ mm$^3$ MICrONS volume)}: $30{,}835{,}500$ total edits $\rightarrow$ $16{,}814$ GPU-hours, \$$33{,}628$ cost
+\item \textbf{Fly (expected $140{,}000$ neurons in connectomic volume)}: $2{,}455{,}600$ total edits $\rightarrow$ $1{,}528$ GPU-hours, \$$3{,}056$ cost
 \end{itemize}
 Despite $23.4\times$ lower per-neuron effort ($17.5$ vs $411$ edits/neuron), fly costs only $4.6\%$ less than mouse (\$$3.1$K vs \$$33.6$K) because mouse's high per-neuron complexity is multiplied by a proportionally larger expected neuron population ($75$K vs $140$K). This demonstrates that connectomic deployment costs are dominated by dataset size and segmentation quality rather than intrinsic anatomical complexity. The dramatic scaling becomes apparent at full-cortex scale: if the entire mouse neocortex ($112$ mm$^3$, $\sim$$10$ million neurons) required the same per-neuron proofreading effort, costs would scale to \$$4.5$ million ($2.2$ million GPU-hours, Level 3), underscoring why connectome proofreading at full mammalian brain scales remains computationally and economically prohibitive.
 
@@ -133,7 +133,7 @@ where GPU-hours depend on the inference time model:
 \textbf{Extrapolation to Connectomic Volumes (Level 2):} Level 2 projects costs to expected neuron populations for complete connectomic deployments:
 \begin{align}
 \text{Mouse:} \quad \text{neurons} &= 75{,}000 \text{ (expected in full 1 mm}^3\text{ at MICrONS density)} \\
-\text{Fly:} \quad \text{neurons} &= 139{,}255 \text{ (actual value for complete brain)}
+\text{Fly:} \quad \text{neurons} &= 140{,}000 \text{ (conservative estimate for complete brain)}
 \end{align}
 Edits and operation counts scale linearly: $\text{edits}_{\text{L2}} = \text{edits}_{\text{L1}} \times \frac{\text{neurons}_{\text{L2}}}{\text{neurons}_{\text{L1}}}$.
 
@@ -202,9 +202,9 @@ Scaling factor: $139{,}255 / 139{,}255 = 1.00$
 \text{Total edits} &= 2{,}442{,}671 \times 1.00 = 2{,}442{,}671
 \end{align*}
 
-Naive model: GPU-hours $= 1{,}364$; Cost $= \$2{,}728$
+Naive model: GPU-hours $= 1{,}357$; Cost $= \$2{,}714$
 
-Realistic model: GPU-hours $= 1{,}528$; Cost $= \$3{,}056$
+Realistic model: GPU-hours $= 1{,}520$; Cost $= \$3{,}040$
 
 \paragraph{Level 3: Full Mammalian Cortex}
 

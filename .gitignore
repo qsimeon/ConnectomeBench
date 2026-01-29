@@ -51,7 +51,7 @@ output/
 data/
 test_data*/
 figures/
-reports/
+# reports/
 annotation/
 analysis/*.txt
 
@@ -87,7 +87,7 @@ debug/
 cave-scripts-master/
 ConnectomeAgent.docx
 ConnectomeBench.pdf
-ConnectomeVLM.pdf
+# ConnectomeVLM.pdf
 # Claude AI
 .claude*
 .swarm/*

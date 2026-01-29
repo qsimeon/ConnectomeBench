@@ -295,12 +295,13 @@ def collect_edit_statistics(neuron_ids: List[int], species: str,
 # Analysis Functions
 # ============================================================================
 
-def calculate_summary_statistics(df: pd.DataFrame) -> Dict[str, Any]:
+def calculate_summary_statistics(df: pd.DataFrame, species: str = None) -> Dict[str, Any]:
     """
     Calculate summary statistics from edit data.
 
     Args:
         df: DataFrame with per-neuron edit statistics
+        species: Species name to look up expected neuron count from DATASET_CONFIG
 
     Returns:
         Dictionary with summary statistics
@@ -329,11 +330,17 @@ def calculate_summary_statistics(df: pd.DataFrame) -> Dict[str, Any]:
         "p99": float(edits_per_neuron.quantile(0.99)),
     }
 
-    return {
+    # Get expected neuron count from config if species is provided
+    expected_neuron_count = None
+    if species and species in DATASET_CONFIG:
+        expected_neuron_count = DATASET_CONFIG[species]["expected_neuron_count"]
+
+    summary_stats = {
         "dataset_info": {
             "total_neurons": int(total_neurons),
             "neurons_with_edits": int((df['total_edits'] > 0).sum()),
             "neurons_without_edits": int((df['total_edits'] == 0).sum()),
+            "expected_neuron_count": expected_neuron_count,
         },
         "edit_totals": {
             "total_edits": int(total_edits),
@@ -359,6 +366,8 @@ def calculate_summary_statistics(df: pd.DataFrame) -> Dict[str, Any]:
             },
         },
     }
+
+    return summary_stats
 
 
 def extrapolate_to_full_dataset(sample_stats: Dict[str, Any],
@@ -513,7 +522,7 @@ def main():
     )
     parser.add_argument(
         "--species",
-        choices=["mouse", "fly"],
+        choices=["mouse", "fly", "human", "zebrafish"],
         required=True,
         help="Dataset to analyze"
     )

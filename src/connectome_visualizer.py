@@ -68,7 +68,7 @@ class ConnectomeVisualizer:
     FLYWIRE_SEG_PATH =  "graphene://https://prod.flywire-daf.com/segmentation/1.0/flywire_public" 
     
     # H01 (Human Cortex) - Requires authentication via https://h01-release.storage.googleapis.com/proofreading.html
-    H01_EM_PATH = "gs://h01-release/data/20210601/4nm_raw"
+    H01_EM_PATH = "precomputed://gs://h01-release/data/20210601/4nm_raw"
     H01_SEG_PATH = "graphene://https://local.brain-wire-test.org/segmentation/table/h01_full0_v2"
     # # TODO: These might be the 104 proofread neurons for H01 (https://h01-release.storage.googleapis.com/data.html)
     # H01_EM_PATH = "precomputed://gs://h01-release/data/20210601/proofread_104"

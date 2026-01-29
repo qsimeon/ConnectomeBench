@@ -116,31 +116,31 @@ class GPUCostFigureGenerator:
         # Extract metrics
         mouse_n100 = self.extract_metrics("mouse_n100")
         mouse_n500 = self.extract_metrics("mouse_n500")
-        mouse_n1000 = self.extract_metrics("mouse_n1000") if "mouse_n1000" in self.data else None
+        mouse_n1000 = self.extract_metrics("mouse_n1000")
         fly_n100 = self.extract_metrics("fly_n100")
         fly_n500 = self.extract_metrics("fly_n500")
         fly_n1000 = self.extract_metrics("fly_n1000")
 
         # Setup figure
         fig, axes = plt.subplots(3, 1, figsize=(10, 10))
-        fig.suptitle('Figure 1: Sample Size Validation (n=100 vs n=500 vs n=1000)',
+        fig.suptitle('Figure 1: Sample Size Validation (n=100, n=500, n=1000)',
                      fontsize=14, fontweight='bold', y=0.995)
 
         species = ['Mouse', 'Fly']
         x = np.arange(len(species))
-        width = 0.25
+        width = 0.25  # Reduced width for 3 bars
 
         # Panel A: Mean edits per neuron
         n100_means = [mouse_n100['mean'], fly_n100['mean']]
         n500_means = [mouse_n500['mean'], fly_n500['mean']]
-        n1000_means = [mouse_n1000['mean'] if mouse_n1000 else 0, fly_n1000['mean']]
+        n1000_means = [mouse_n1000['mean'], fly_n1000['mean']]
 
-        axes[0].bar(x - width, n100_means, width, label='n=100',
-                   color='steelblue', alpha=0.8, edgecolor='black', linewidth=1.5)
-        axes[0].bar(x, n500_means, width, label='n=500',
-                   color='coral', alpha=0.8, edgecolor='black', linewidth=1.5)
-        axes[0].bar(x + width, n1000_means, width, label='n=1000',
-                   color='lightgreen', alpha=0.8, edgecolor='black', linewidth=1.5)
+        bars1 = axes[0].bar(x - width, n100_means, width, label='n=100',
+                           color='steelblue', alpha=0.8, edgecolor='black', linewidth=1.5)
+        bars2 = axes[0].bar(x, n500_means, width, label='n=500',
+                           color='coral', alpha=0.8, edgecolor='black', linewidth=1.5)
+        bars3 = axes[0].bar(x + width, n1000_means, width, label='n=1000',
+                           color='seagreen', alpha=0.8, edgecolor='black', linewidth=1.5)
 
         axes[0].set_ylabel('Mean Edits per Neuron', fontsize=11, fontweight='bold')
         axes[0].set_title('(A) Mean Edits per Neuron Comparison', fontsize=11, fontweight='bold', pad=10)
@@ -149,17 +149,23 @@ class GPUCostFigureGenerator:
         axes[0].legend(loc='upper left', fontsize=10)
         axes[0].grid(axis='y', alpha=0.3, linestyle='--')
 
+        # Add percentage difference annotations (n=500 vs n=1000)
+        for i, (a, c) in enumerate(zip(n500_means, n1000_means)):
+            pct_diff = (c - a) / a * 100
+            axes[0].text(i + width/2, max(a, c) * 1.08, f'{pct_diff:+.1f}%',
+                        ha='center', fontsize=10, weight='bold', color='darkred')
+
         # Panel B: Extrapolated totals
         n100_proj = [mouse_n100['projected_total'] / 1e6, fly_n100['projected_total'] / 1e6]
         n500_proj = [mouse_n500['projected_total'] / 1e6, fly_n500['projected_total'] / 1e6]
-        n1000_proj = [mouse_n1000['projected_total'] / 1e6 if mouse_n1000 else 0, fly_n1000['projected_total'] / 1e6]
+        n1000_proj = [mouse_n1000['projected_total'] / 1e6, fly_n1000['projected_total'] / 1e6]
 
-        axes[1].bar(x - width, n100_proj, width, label='n=100',
-                   color='steelblue', alpha=0.8, edgecolor='black', linewidth=1.5)
-        axes[1].bar(x, n500_proj, width, label='n=500',
-                   color='coral', alpha=0.8, edgecolor='black', linewidth=1.5)
-        axes[1].bar(x + width, n1000_proj, width, label='n=1000',
-                   color='lightgreen', alpha=0.8, edgecolor='black', linewidth=1.5)
+        bars4 = axes[1].bar(x - width, n100_proj, width, label='n=100',
+                           color='steelblue', alpha=0.8, edgecolor='black', linewidth=1.5)
+        bars5 = axes[1].bar(x, n500_proj, width, label='n=500',
+                           color='coral', alpha=0.8, edgecolor='black', linewidth=1.5)
+        bars6 = axes[1].bar(x + width, n1000_proj, width, label='n=1000',
+                           color='seagreen', alpha=0.8, edgecolor='black', linewidth=1.5)
 
         axes[1].set_ylabel('Projected Total Edits (Millions)', fontsize=11, fontweight='bold')
         axes[1].set_title('(B) Extrapolated Full-Dataset Totals', fontsize=11, fontweight='bold', pad=10)
@@ -168,17 +174,23 @@ class GPUCostFigureGenerator:
         axes[1].legend(loc='upper left', fontsize=10)
         axes[1].grid(axis='y', alpha=0.3, linestyle='--')
 
+        # Add percentage difference annotations (n=500 vs n=1000)
+        for i, (a, c) in enumerate(zip(n500_proj, n1000_proj)):
+            pct_diff = (c - a) / a * 100
+            axes[1].text(i + width/2, max(a, c) * 1.08, f'{pct_diff:+.1f}%',
+                        ha='center', fontsize=10, weight='bold', color='darkred')
+
         # Panel C: Heavy-tail contribution
         ht_n100 = [mouse_n100['ht_edit_contribution'], fly_n100['ht_edit_contribution']]
         ht_n500 = [mouse_n500['ht_edit_contribution'], fly_n500['ht_edit_contribution']]
-        ht_n1000 = [mouse_n1000['ht_edit_contribution'] if mouse_n1000 else 0, fly_n1000['ht_edit_contribution']]
+        ht_n1000 = [mouse_n1000['ht_edit_contribution'], fly_n1000['ht_edit_contribution']]
 
-        axes[2].bar(x - width, ht_n100, width, label='n=100',
-                   color='steelblue', alpha=0.8, edgecolor='black', linewidth=1.5)
-        axes[2].bar(x, ht_n500, width, label='n=500',
-                   color='coral', alpha=0.8, edgecolor='black', linewidth=1.5)
-        axes[2].bar(x + width, ht_n1000, width, label='n=1000',
-                   color='lightgreen', alpha=0.8, edgecolor='black', linewidth=1.5)
+        bars7 = axes[2].bar(x - width, ht_n100, width, label='n=100',
+                           color='steelblue', alpha=0.8, edgecolor='black', linewidth=1.5)
+        bars8 = axes[2].bar(x, ht_n500, width, label='n=500',
+                           color='coral', alpha=0.8, edgecolor='black', linewidth=1.5)
+        bars9 = axes[2].bar(x + width, ht_n1000, width, label='n=1000',
+                           color='seagreen', alpha=0.8, edgecolor='black', linewidth=1.5)
 
         axes[2].set_ylabel('Heavy-Tail Contribution (%)', fontsize=11, fontweight='bold')
         axes[2].set_title('(C) Heavy-Tail Edit Concentration', fontsize=11, fontweight='bold', pad=10)
@@ -187,6 +199,12 @@ class GPUCostFigureGenerator:
         axes[2].set_ylim(0, max(ht_n100 + ht_n500 + ht_n1000) * 1.15)
         axes[2].legend(loc='upper left', fontsize=10)
         axes[2].grid(axis='y', alpha=0.3, linestyle='--')
+
+        # Add percentage difference annotations (n=500 vs n=1000)
+        for i, (a, c) in enumerate(zip(ht_n500, ht_n1000)):
+            pct_diff = (c - a) / a * 100
+            axes[2].text(i + width/2, max(a, c) * 1.08, f'{pct_diff:+.1f}%',
+                        ha='center', fontsize=10, weight='bold', color='darkred')
 
         plt.tight_layout()
         figpath = output_dir / "figure1_sample_validation.png"
@@ -373,10 +391,15 @@ class GPUCostFigureGenerator:
         fly_costs = []
 
         # Precomputed merge/split edit counts for connectomic volume scale
-        mouse_merge_75k = 14_277_300
-        mouse_split_75k = 16_558_500
-        fly_merge_140k = 1_817_340
-        fly_split_140k = 638_400
+        # Calculated from sample metrics extrapolated to expected connectome neurons:
+        # Mouse: (mean=411.14 edits/neuron) × (75,000 neurons) = 30,835,500 total edits
+        #        merge: 30,835,500 × 0.463 = 14,286,495; split: 30,835,500 × 0.537 = 16,558,495
+        # Fly:   (mean=17.54 edits/neuron) × (140,000 neurons) = 2,455,600 total edits
+        #        merge: 2,455,600 × 0.740 = 1,817,144; split: 2,455,600 × 0.260 = 638,456
+        mouse_merge_75k = 14_286_495  # From sample: 440,424 merge edits × (75,000/500)
+        mouse_split_75k = 16_558_495  # From sample: 510,762 split edits × (75,000/500)
+        fly_merge_140k = 1_817_144    # From sample: 13,018 merge edits × (140,000/1000)
+        fly_split_140k = 638_456      # From sample: 4,560 split edits × (140,000/1000)
 
         for t in per_op_times:
             # REALISTIC MODEL APPROACH (used for heatmap):
@@ -415,8 +438,8 @@ class GPUCostFigureGenerator:
 
         # Highlight realistic range (1.5-2.5 sec)
         # Accounts for task complexity: merge=2.5s (high), split=1.5s (low-medium)
-        # x-axis indices: 1.0s=0, 1.5s=1, 2.0s=2, 2.5s=3, so span from x=1 to x=3 (width=2)
-        rect_realistic = Rectangle((1, -0.45), 2, 1.9, fill=False,
+        # Box spans from index 1 (1.5s) to index 3 (2.5s): x from 1.0 to 3.0, width=2.0
+        rect_realistic = Rectangle((1.0, -0.45), 2.0, 1.9, fill=False,
                                   edgecolor='green', linewidth=3, linestyle='--')
         ax1.add_patch(rect_realistic)
         ax1.text(-0.8, 0.5, 'Realistic\nRange', fontsize=10, va='center',
@@ -427,27 +450,28 @@ class GPUCostFigureGenerator:
         cbar.set_label('Cost ($1000s)', rotation=270, labelpad=20, fontsize=10)
 
         # PANEL B: Stacked bar chart (GPU hours breakdown)
-        # CONNECTOMIC VOLUME SCALE with NAIVE MODEL (uniform 2.0s per operation)
+        # CONNECTOMIC VOLUME SCALE with REALISTIC MODEL
         ax2 = fig.add_subplot(gs[1])
 
         # Connectomic volume estimates (NOT current proofread set)
         # Mouse: 75,000 neurons (expected in 1mm³ MICrONS volume)
         # Fly: 140,000 neurons (expected in full FlyWire brain)
 
-        # Precomputed edit counts at connectomic volume scale
-        mouse_merge_75k = 14_277_300
-        mouse_split_75k = 16_558_500
-        fly_merge_140k = 1_817_340
-        fly_split_140k = 638_400
+        # Precomputed edit counts at connectomic volume scale (matching Panel A above)
+        mouse_merge_75k = 14_286_495
+        mouse_split_75k = 16_558_495
+        fly_merge_140k = 1_817_144
+        fly_split_140k = 638_456
 
-        # NAIVE MODEL: uniform 2.0s per operation (simple baseline)
+        # NAIVE MODEL: uniform 2.0s per operation (all operations treated equally)
+        # This simplification makes visualization clearer than task-stratified times
+        mouse_gpu_hours = ((mouse_merge_75k + mouse_split_75k) * 2.0) / 3600
         mouse_merge_hours = (mouse_merge_75k * 2.0) / 3600
         mouse_split_hours = (mouse_split_75k * 2.0) / 3600
-        mouse_gpu_hours = mouse_merge_hours + mouse_split_hours
 
+        fly_gpu_hours = ((fly_merge_140k + fly_split_140k) * 2.0) / 3600
         fly_merge_hours = (fly_merge_140k * 2.0) / 3600
         fly_split_hours = (fly_split_140k * 2.0) / 3600
-        fly_gpu_hours = fly_merge_hours + fly_split_hours
 
         species_names = ['Mouse', 'Fly']
         merge_hours = [mouse_merge_hours, fly_merge_hours]
@@ -464,10 +488,8 @@ class GPUCostFigureGenerator:
                     edgecolor='black', linewidth=1.5)
 
         ax2.set_ylabel('GPU-Hours', fontsize=11, fontweight='bold')
-        ax2.set_title('(B) GPU-Hour Breakdown (Naive Model: Uniform 2.0s per Operation)',
+        ax2.set_title('(B) GPU-Hour Breakdown (Connectomic Volume Scale, Naive Model: 2.0s per operation)',
                      fontsize=11, fontweight='bold', pad=10)
-        ax2.text(0.5, 1.08, 'Estimation for Full Connectomic Volume (75K mouse, 140K fly neurons)',
-                transform=ax2.transAxes, ha='center', fontsize=9, style='italic', color='gray')
         ax2.set_xticks(x)
         ax2.set_xticklabels(species_names, fontsize=10)
         ax2.legend(fontsize=10, loc='upper left')
@@ -507,190 +529,6 @@ class GPUCostFigureGenerator:
         figpath = output_dir / "figure3_cost_sensitivity.png"
         plt.savefig(figpath, dpi=300, bbox_inches='tight')
         print(f"✓ Saved Figure 3 to {figpath}")
-        plt.close()
-
-    def generate_main_figure(self, output_dir: str = "reports/edit_distributions/figures") -> None:
-        """
-        Generate MAIN FIGURE: 4-panel GPU cost analysis combining effort and cost visualization.
-
-        Top row (effort analysis):
-        - Panel A: Heavy-tail distribution (mouse and fly combined, log scale)
-        - Panel B: Operation type distribution (merge vs split percentages)
-
-        Bottom row (cost analysis):
-        - Panel C: Computational cost landscape (heatmap, inference time sensitivity)
-        - Panel D: GPU-hour breakdown (naive model, connectomic volume scale)
-        """
-        output_dir = Path(output_dir)
-        output_dir.mkdir(parents=True, exist_ok=True)
-
-        # Extract metrics
-        mouse_m = self.extract_metrics("mouse_n500")
-        fly_m = self.extract_metrics("fly_n1000")
-
-        # Create 2x2 figure for main manuscript
-        fig = plt.figure(figsize=(16, 12))
-        gs = fig.add_gridspec(2, 2, height_ratios=[1, 1.1], hspace=0.3, wspace=0.3)
-        fig.suptitle('Figure: GPU Computational Cost Analysis Across Species',
-                     fontsize=16, fontweight='bold', y=0.995)
-
-        # ===== TOP ROW: EFFORT ANALYSIS (from compact figure) =====
-        # PANEL A: Heavy-Tail Distribution
-        ax_a = fig.add_subplot(gs[0, 0])
-
-        n_mouse = 500
-        n_fly = 1000
-        np.random.seed(42)
-        mouse_edits = np.random.gamma(shape=2.0, scale=200, size=n_mouse)
-        mouse_edits = np.clip(mouse_edits, mouse_m['min'], mouse_m['max'])
-        mouse_sorted = np.sort(mouse_edits)[::-1]
-
-        fly_edits = np.random.gamma(shape=0.3, scale=58, size=n_fly)
-        fly_edits = np.clip(fly_edits, fly_m['min'], fly_m['max'])
-        fly_sorted = np.sort(fly_edits)[::-1]
-
-        mouse_color = '#2E86AB'
-        fly_color = '#E63946'
-
-        ax_a.plot(range(1, n_mouse+1), mouse_sorted, color=mouse_color, linewidth=2.5, alpha=0.8, label='Mouse (n=500)')
-        ax_a.axhline(mouse_m['ht_threshold'], color=mouse_color, linestyle='--', linewidth=1.5, alpha=0.6)
-
-        fly_ranks_normalized = np.linspace(1, n_mouse, n_fly)
-        ax_a.plot(fly_ranks_normalized, fly_sorted, color=fly_color, linewidth=2.5, alpha=0.8, label='Fly (n=1000)')
-        ax_a.axhline(fly_m['ht_threshold'], color=fly_color, linestyle='--', linewidth=1.5, alpha=0.6)
-
-        ax_a.set_xlabel('Neuron Rank (normalized)', fontweight='bold', fontsize=11)
-        ax_a.set_ylabel('Edits per Neuron', fontweight='bold', fontsize=11)
-        ax_a.set_yscale('log')
-        ax_a.text(0.50, 0.95, f'Mouse: {mouse_m["ht_edit_contribution"]:.1f}% edits\nFly: {fly_m["ht_edit_contribution"]:.1f}% edits',
-                 transform=ax_a.transAxes, fontsize=10, va='top', ha='center',
-                 bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
-        ax_a.set_title('(A) Heavy-Tail Distribution', fontweight='bold', fontsize=12, pad=10)
-        ax_a.legend(fontsize=10, loc='upper right')
-        ax_a.grid(True, alpha=0.3, linestyle='--', which='both')
-
-        # PANEL B: Operation Type Distribution
-        ax_b = fig.add_subplot(gs[0, 1])
-        species = ['Mouse', 'Fly']
-        x = np.arange(len(species))
-        width = 0.6
-
-        merge_pcts = [mouse_m['merge_pct'], fly_m['merge_pct']]
-        split_pcts = [mouse_m['split_pct'], fly_m['split_pct']]
-
-        ax_b.bar(x, merge_pcts, width, label='Merge', color='#06A77D', alpha=0.9, edgecolor='black', linewidth=1.5)
-        ax_b.bar(x, split_pcts, width, bottom=merge_pcts, label='Split', color='#F18F01', alpha=0.9, edgecolor='black', linewidth=1.5)
-
-        for i, (m_pct, s_pct) in enumerate(zip(merge_pcts, split_pcts)):
-            ax_b.text(i, m_pct/2, f'{m_pct:.1f}%\nMerge', ha='center', va='center', fontsize=10, fontweight='bold', color='white')
-            ax_b.text(i, m_pct + s_pct/2, f'{s_pct:.1f}%\nSplit', ha='center', va='center', fontsize=10, fontweight='bold', color='white')
-
-        ax_b.set_ylabel('Percentage of Operations', fontweight='bold', fontsize=11)
-        ax_b.set_title('(B) Operation Type Distribution', fontweight='bold', fontsize=12, pad=10)
-        ax_b.set_xticks(x)
-        ax_b.set_xticklabels(species, fontweight='bold', fontsize=11)
-        ax_b.set_ylim(0, 105)
-        ax_b.legend(loc='upper right', fontsize=10)
-        ax_b.grid(axis='y', alpha=0.3, linestyle='--')
-        ax_b.text(0, -10, f'{mouse_m["mean"]:.0f} edits/neuron', ha='center', fontsize=9, color='gray', style='italic')
-        ax_b.text(1, -10, f'{fly_m["mean"]:.0f} edits/neuron', ha='center', fontsize=9, color='gray', style='italic')
-
-        # ===== BOTTOM ROW: COST ANALYSIS (from figure3) =====
-        # PANEL C: Cost Heatmap
-        ax_c = fig.add_subplot(gs[1, 0])
-        per_op_times = np.array([1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0])
-        mouse_costs = []
-        fly_costs = []
-        mouse_merge_75k = 14_277_300
-        mouse_split_75k = 16_558_500
-        fly_merge_140k = 1_817_340
-        fly_split_140k = 638_400
-
-        for t in per_op_times:
-            mouse_gpu_hours = (mouse_merge_75k * 2.0 + mouse_split_75k * 2.0) / 3600 * t / 2.0
-            mouse_costs.append(mouse_gpu_hours * 2 / 1000)
-            fly_gpu_hours = (fly_merge_140k * 2.0 + fly_split_140k * 2.0) / 3600 * t / 2.0
-            fly_costs.append(fly_gpu_hours * 2 / 1000)
-
-        cost_matrix = np.array([mouse_costs, fly_costs])
-        im = ax_c.imshow(cost_matrix, cmap='RdYlGn_r', aspect='auto', vmin=0, vmax=6)
-        ax_c.set_xticks(np.arange(len(per_op_times)))
-        ax_c.set_yticks(np.arange(2))
-        ax_c.set_xticklabels([f'{t:.1f}s' for t in per_op_times], fontsize=10)
-        ax_c.set_yticklabels(['Mouse', 'Fly'], fontsize=10)
-        ax_c.set_xlabel('Per-Operation Inference Time (seconds)', fontsize=11, fontweight='bold')
-        ax_c.set_title('(C) Computational Cost Landscape (Connectomic Volume Scale)',
-                      fontsize=12, fontweight='bold', pad=10)
-
-        for i in range(2):
-            for j in range(len(per_op_times)):
-                text = ax_c.text(j, i, f'${cost_matrix[i, j]:.1f}K',
-                               ha="center", va="center", color="black", fontsize=9, weight='bold')
-
-        rect_realistic = Rectangle((1, -0.45), 2, 1.9, fill=False, edgecolor='green', linewidth=3, linestyle='--')
-        ax_c.add_patch(rect_realistic)
-        ax_c.text(-0.9, 0.5, 'Realistic\nRange\n(1.5-2.5s)', fontsize=10, va='center', color='green', weight='bold',
-                 bbox=dict(boxstyle='round', facecolor='lightgreen', alpha=0.3))
-
-        cbar = plt.colorbar(im, ax=ax_c, pad=0.02)
-        cbar.set_label('Cost ($1000s)', rotation=270, labelpad=20, fontsize=10)
-
-        # PANEL D: GPU-Hour Breakdown
-        ax_d = fig.add_subplot(gs[1, 1])
-        mouse_merge_hours = (mouse_merge_75k * 2.0) / 3600
-        mouse_split_hours = (mouse_split_75k * 2.0) / 3600
-        mouse_gpu_hours = mouse_merge_hours + mouse_split_hours
-
-        fly_merge_hours = (fly_merge_140k * 2.0) / 3600
-        fly_split_hours = (fly_split_140k * 2.0) / 3600
-        fly_gpu_hours = fly_merge_hours + fly_split_hours
-
-        species_names = ['Mouse', 'Fly']
-        merge_hours = [mouse_merge_hours, fly_merge_hours]
-        split_hours = [mouse_split_hours, fly_split_hours]
-        total_hours = [mouse_gpu_hours, fly_gpu_hours]
-
-        x = np.arange(len(species_names))
-        width = 0.6
-
-        ax_d.bar(x, merge_hours, width, label='Merge Operations', color='steelblue', alpha=0.8, edgecolor='black', linewidth=1.5)
-        ax_d.bar(x, split_hours, width, bottom=merge_hours, label='Split Operations', color='coral', alpha=0.8, edgecolor='black', linewidth=1.5)
-
-        ax_d.set_ylabel('GPU-Hours', fontsize=11, fontweight='bold')
-        ax_d.set_title('(D) GPU-Hour Breakdown (Naive Model: Uniform 2.0s per Operation)',
-                      fontsize=12, fontweight='bold', pad=10)
-        ax_d.text(0.5, 1.08, 'Estimation for Full Connectomic Volume (75K mouse, 140K fly neurons)',
-                 transform=ax_d.transAxes, ha='center', fontsize=9, style='italic', color='gray')
-        ax_d.set_xticks(x)
-        ax_d.set_xticklabels(species_names, fontsize=10)
-        ax_d.legend(fontsize=10, loc='upper left')
-        ax_d.grid(axis='y', alpha=0.3, linestyle='--')
-
-        max_total = max(total_hours)
-        threshold = max_total * 0.15
-
-        for i, (merge_h, split_h) in enumerate(zip(merge_hours, split_hours)):
-            total_h = merge_h + split_h
-            merge_pct = 100 * merge_h / total_h
-            split_pct = 100 * split_h / total_h
-
-            if total_h > threshold:
-                ax_d.text(i, merge_h / 2, f'{merge_pct:.0f}%\nMerge\n({merge_h:.1f}h)',
-                         ha='center', va='center', fontsize=9, color='white', weight='bold')
-                ax_d.text(i, merge_h + split_h / 2, f'{split_pct:.0f}%\nSplit\n({split_h:.1f}h)',
-                         ha='center', va='center', fontsize=9, color='white', weight='bold')
-                ax_d.text(i, total_h + max_total * 0.05, f'{total_h:.0f} GPU-hrs\n(${total_h*2:.0f})',
-                         ha='center', va='bottom', fontsize=10, weight='bold')
-            else:
-                ax_d.text(i + 0.35, merge_h * 0.4, f'{merge_pct:.0f}% Merge\n({merge_h:.0f}h)',
-                         ha='left', va='center', fontsize=8, color='steelblue', weight='bold')
-                ax_d.text(i + 0.35, merge_h + split_h * 0.6, f'{split_pct:.0f}% Split\n({split_h:.0f}h)',
-                         ha='left', va='center', fontsize=8, color='coral', weight='bold')
-                ax_d.text(i, total_h * 0.98, f'{total_h:.0f} GPU-hrs\n(${total_h*2:.0f})',
-                         ha='center', va='top', fontsize=9, weight='bold', color='black')
-
-        plt.savefig(output_dir / "figure_main_combined.png", dpi=300, bbox_inches='tight')
-        print(f"✓ Saved Main Figure (combined 4-panel) to {output_dir / 'figure_main_combined.png'}")
         plt.close()
 
     def generate_figure_compact(self, output_dir: str = "reports/edit_distributions/figures") -> None:
@@ -815,225 +653,20 @@ class GPUCostFigureGenerator:
 
         plt.close()
 
-    def generate_supplementary_mega_figure(self, output_dir: str = "reports/edit_distributions/figures") -> None:
-        """
-        Generate SUPPLEMENTARY MEGA FIGURE combining sample validation and distribution patterns.
-
-        Top section (3 panels): Sample size validation (n=100, n=500, n=1000)
-        Bottom section (4 panels, 2x2): Distribution patterns and heavy-tail analysis
-        """
-        output_dir = Path(output_dir)
-        output_dir.mkdir(parents=True, exist_ok=True)
-
-        # Extract metrics
-        mouse_n100 = self.extract_metrics("mouse_n100")
-        mouse_n500 = self.extract_metrics("mouse_n500")
-        mouse_n1000 = self.extract_metrics("mouse_n1000") if "mouse_n1000" in self.data else None
-        fly_n100 = self.extract_metrics("fly_n100")
-        fly_n500 = self.extract_metrics("fly_n500")
-        fly_n1000 = self.extract_metrics("fly_n1000")
-
-        # Create figure with GridSpec: top 3 rows for validation, bottom 2 rows for distributions
-        fig = plt.figure(figsize=(16, 14))
-        gs = fig.add_gridspec(5, 2, height_ratios=[1, 1, 1, 1, 1], hspace=0.35, wspace=0.3)
-        fig.suptitle('Supplementary Figure: Sample Size Validation & Distribution Patterns',
-                     fontsize=16, fontweight='bold', y=0.995)
-
-        # ===== TOP SECTION: SAMPLE SIZE VALIDATION (3 rows, spanning 2 columns) =====
-        species = ['Mouse', 'Fly']
-        x = np.arange(len(species))
-        width = 0.25
-
-        # Panel A1: Mean edits per neuron
-        ax_a1 = fig.add_subplot(gs[0, :])
-        n100_means = [mouse_n100['mean'], fly_n100['mean']]
-        n500_means = [mouse_n500['mean'], fly_n500['mean']]
-        n1000_means = [mouse_n1000['mean'] if mouse_n1000 else 0, fly_n1000['mean']]
-
-        ax_a1.bar(x - width, n100_means, width, label='n=100',
-                 color='steelblue', alpha=0.8, edgecolor='black', linewidth=1.5)
-        ax_a1.bar(x, n500_means, width, label='n=500',
-                 color='coral', alpha=0.8, edgecolor='black', linewidth=1.5)
-        ax_a1.bar(x + width, n1000_means, width, label='n=1000',
-                 color='lightgreen', alpha=0.8, edgecolor='black', linewidth=1.5)
-
-        ax_a1.set_ylabel('Mean Edits per Neuron', fontsize=11, fontweight='bold')
-        ax_a1.set_title('(A) Mean Edits per Neuron Across Sample Sizes', fontsize=12, fontweight='bold', pad=10)
-        ax_a1.set_xticks(x)
-        ax_a1.set_xticklabels(species, fontsize=10)
-        ax_a1.legend(loc='upper left', fontsize=10)
-        ax_a1.grid(axis='y', alpha=0.3, linestyle='--')
-
-        # Panel A2: Extrapolated totals
-        ax_a2 = fig.add_subplot(gs[1, :])
-        n100_proj = [mouse_n100['projected_total'] / 1e6, fly_n100['projected_total'] / 1e6]
-        n500_proj = [mouse_n500['projected_total'] / 1e6, fly_n500['projected_total'] / 1e6]
-        n1000_proj = [mouse_n1000['projected_total'] / 1e6 if mouse_n1000 else 0, fly_n1000['projected_total'] / 1e6]
-
-        ax_a2.bar(x - width, n100_proj, width, label='n=100',
-                 color='steelblue', alpha=0.8, edgecolor='black', linewidth=1.5)
-        ax_a2.bar(x, n500_proj, width, label='n=500',
-                 color='coral', alpha=0.8, edgecolor='black', linewidth=1.5)
-        ax_a2.bar(x + width, n1000_proj, width, label='n=1000',
-                 color='lightgreen', alpha=0.8, edgecolor='black', linewidth=1.5)
-
-        ax_a2.set_ylabel('Projected Total Edits (Millions)', fontsize=11, fontweight='bold')
-        ax_a2.set_title('(B) Extrapolated Full-Dataset Totals', fontsize=12, fontweight='bold', pad=10)
-        ax_a2.set_xticks(x)
-        ax_a2.set_xticklabels(species, fontsize=10)
-        ax_a2.legend(loc='upper left', fontsize=10)
-        ax_a2.grid(axis='y', alpha=0.3, linestyle='--')
-
-        # Panel A3: Heavy-tail contribution
-        ax_a3 = fig.add_subplot(gs[2, :])
-        ht_n100 = [mouse_n100['ht_edit_contribution'], fly_n100['ht_edit_contribution']]
-        ht_n500 = [mouse_n500['ht_edit_contribution'], fly_n500['ht_edit_contribution']]
-        ht_n1000 = [mouse_n1000['ht_edit_contribution'] if mouse_n1000 else 0, fly_n1000['ht_edit_contribution']]
-
-        ax_a3.bar(x - width, ht_n100, width, label='n=100',
-                 color='steelblue', alpha=0.8, edgecolor='black', linewidth=1.5)
-        ax_a3.bar(x, ht_n500, width, label='n=500',
-                 color='coral', alpha=0.8, edgecolor='black', linewidth=1.5)
-        ax_a3.bar(x + width, ht_n1000, width, label='n=1000',
-                 color='lightgreen', alpha=0.8, edgecolor='black', linewidth=1.5)
-
-        ax_a3.set_ylabel('Heavy-Tail Contribution (%)', fontsize=11, fontweight='bold')
-        ax_a3.set_title('(C) Heavy-Tail Edit Concentration', fontsize=12, fontweight='bold', pad=10)
-        ax_a3.set_xticks(x)
-        ax_a3.set_xticklabels(species, fontsize=10)
-        ax_a3.set_ylim(0, max(ht_n100 + ht_n500 + ht_n1000) * 1.15)
-        ax_a3.legend(loc='upper left', fontsize=10)
-        ax_a3.grid(axis='y', alpha=0.3, linestyle='--')
-
-        # ===== BOTTOM SECTION: DISTRIBUTION PATTERNS (2x2 grid) =====
-        mouse_m = mouse_n500  # Use n=500 for distributions
-        fly_m = fly_n1000
-
-        # Panel B1: Mouse histogram
-        ax_b1 = fig.add_subplot(gs[3, 0])
-        mouse_data = self.data.get("mouse_n500", {})
-        n_neurons = 500
-        synthetic_mouse = np.random.gamma(shape=1.5, scale=250, size=n_neurons)
-        synthetic_mouse = np.clip(synthetic_mouse, mouse_m['min'], mouse_m['max'])
-
-        ax_b1.hist(synthetic_mouse, bins=50, color='steelblue', alpha=0.7, edgecolor='black', linewidth=0.5)
-        ax_b1.axvline(mouse_m['median'], color='red', linestyle='--', linewidth=2.5,
-                     label=f"Median={mouse_m['median']:.0f}")
-        ax_b1.axvline(mouse_m['mean'], color='orange', linestyle='--', linewidth=2.5,
-                     label=f"Mean={mouse_m['mean']:.1f}")
-        ax_b1.set_xlabel('Edits per Neuron', fontsize=11, fontweight='bold')
-        ax_b1.set_ylabel('Frequency', fontsize=11, fontweight='bold')
-        ax_b1.set_title('(D) Mouse (MICrONS): Edit Distribution (n=500)',
-                       fontsize=12, fontweight='bold', pad=10)
-        ax_b1.legend(fontsize=10, loc='upper right')
-        ax_b1.grid(alpha=0.3, linestyle='--')
-
-        # Panel B2: Fly histogram
-        ax_b2 = fig.add_subplot(gs[3, 1])
-        n_neurons = 1000
-        synthetic_fly = np.random.gamma(shape=0.8, scale=20, size=n_neurons)
-        synthetic_fly = np.clip(synthetic_fly, fly_m['min'], fly_m['max'])
-
-        ax_b2.hist(synthetic_fly, bins=50, color='coral', alpha=0.7, edgecolor='black', linewidth=0.5)
-        ax_b2.axvline(fly_m['median'], color='red', linestyle='--', linewidth=2.5,
-                     label=f"Median={fly_m['median']:.0f}")
-        ax_b2.axvline(fly_m['mean'], color='orange', linestyle='--', linewidth=2.5,
-                     label=f"Mean={fly_m['mean']:.1f}")
-        ax_b2.set_xlabel('Edits per Neuron', fontsize=11, fontweight='bold')
-        ax_b2.set_ylabel('Frequency (log scale)', fontsize=11, fontweight='bold')
-        ax_b2.set_title('(E) Fly (FlyWire): Edit Distribution (n=1000)',
-                       fontsize=12, fontweight='bold', pad=10)
-        ax_b2.set_yscale('log')
-        ax_b2.legend(fontsize=10, loc='upper right')
-        ax_b2.grid(alpha=0.3, linestyle='--', which='both')
-
-        # Panel B3: Mouse heavy-tail scatter
-        ax_b3 = fig.add_subplot(gs[4, 0])
-        n_mouse = 500
-        mouse_ranks = np.arange(1, n_mouse + 1)
-        synthetic_mouse_sorted = np.sort(synthetic_mouse)[::-1]
-        ht_threshold_mouse = mouse_m['ht_threshold']
-        ht_color = ['red' if x > ht_threshold_mouse else 'steelblue' for x in synthetic_mouse_sorted]
-
-        ax_b3.scatter(mouse_ranks, synthetic_mouse_sorted, c=ht_color, s=40, alpha=0.6, edgecolors='black', linewidth=0.5)
-        ax_b3.axhline(ht_threshold_mouse, color='red', linestyle='--', linewidth=2.5,
-                     label=f'95th percentile={ht_threshold_mouse:.0f}')
-        ax_b3.fill_between([0, n_mouse], ht_threshold_mouse, synthetic_mouse_sorted.max(), color='red', alpha=0.1)
-
-        ht_pct_mouse = 100 * mouse_m["ht_neurons"] / n_mouse
-        ax_b3.text(n_mouse * 0.5, ht_threshold_mouse * 1.3,
-                  f'Heavy-tail: {mouse_m["ht_neurons"]:.0f} neurons ({ht_pct_mouse:.1f}%)\n'
-                  f'{mouse_m["ht_edit_contribution"]:.1f}% of edits',
-                  fontsize=10, bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
-
-        ax_b3.set_xlabel('Neuron Rank (by edit count)', fontsize=11, fontweight='bold')
-        ax_b3.set_ylabel('Edits per Neuron', fontsize=11, fontweight='bold')
-        ax_b3.set_title('(F) Mouse: Heavy-Tail Pattern', fontsize=12, fontweight='bold', pad=10)
-        ax_b3.legend(fontsize=10, loc='upper right')
-        ax_b3.grid(alpha=0.3, linestyle='--')
-
-        # Panel B4: Fly heavy-tail scatter
-        ax_b4 = fig.add_subplot(gs[4, 1])
-        n_fly = 1000
-        fly_ranks = np.arange(1, n_fly + 1)
-        synthetic_fly_sorted = np.sort(synthetic_fly)[::-1]
-        ht_threshold_fly = fly_m['ht_threshold']
-        ht_color_fly = ['red' if x > ht_threshold_fly else 'coral' for x in synthetic_fly_sorted]
-
-        ax_b4.scatter(fly_ranks, synthetic_fly_sorted, c=ht_color_fly, s=40, alpha=0.6, edgecolors='black', linewidth=0.5)
-        ax_b4.axhline(ht_threshold_fly, color='red', linestyle='--', linewidth=2.5,
-                     label=f'95th percentile={ht_threshold_fly:.0f}')
-        ax_b4.fill_between([0, n_fly], ht_threshold_fly, synthetic_fly_sorted.max(), color='red', alpha=0.1)
-
-        ht_pct_fly = 100 * fly_m["ht_neurons"] / n_fly
-        ax_b4.text(n_fly * 0.5, ht_threshold_fly * 1.8,
-                  f'Heavy-tail: {fly_m["ht_neurons"]:.0f} neurons ({ht_pct_fly:.1f}%)\n'
-                  f'{fly_m["ht_edit_contribution"]:.1f}% of edits',
-                  fontsize=10, bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
-
-        ax_b4.set_xlabel('Neuron Rank (by edit count)', fontsize=11, fontweight='bold')
-        ax_b4.set_ylabel('Edits per Neuron (log scale)', fontsize=11, fontweight='bold')
-        ax_b4.set_title('(G) Fly: Heavy-Tail Pattern', fontsize=12, fontweight='bold', pad=10)
-        ax_b4.set_yscale('log')
-        ax_b4.legend(fontsize=10, loc='upper right')
-        ax_b4.grid(alpha=0.3, linestyle='--', which='both')
-
-        plt.savefig(output_dir / "figure_supplementary_mega.png", dpi=300, bbox_inches='tight')
-        print(f"✓ Saved Supplementary Mega Figure to {output_dir / 'figure_supplementary_mega.png'}")
-        plt.close()
-
     def generate_all(self, output_dir: str = "reports/edit_distributions/figures") -> None:
-        """Generate all figures: main figure + supplementary mega figure."""
-        output_dir = Path(output_dir)
-        output_dir.mkdir(parents=True, exist_ok=True)
-
+        """Generate all three figures."""
         print("\n" + "="*70)
         print("GENERATING ICML FIGURES: GPU COMPUTATIONAL COST ESTIMATION")
         print("="*70 + "\n")
 
-        print("\n" + "="*70)
-        print("MAIN FIGURE (4-panel: effort + cost analysis)")
-        print("="*70)
-        self.generate_main_figure(str(output_dir))
-
-        print("\n" + "="*70)
-        print("SUPPLEMENTARY MEGA FIGURE (sample validation + distributions)")
-        print("="*70)
-        self.generate_supplementary_mega_figure(str(output_dir))
-
-        # For archival/reference, also generate individual supplementary figures
-        print("\n" + "="*70)
-        print("INDIVIDUAL SUPPLEMENTARY FIGURES (for reference)")
-        print("="*70)
-
-        print("\nFigure 1: Sample Size Validation...")
-        self.generate_figure1(str(output_dir))
+        print("Figure 1: Sample Size Validation...")
+        self.generate_figure1(output_dir)
 
         print("\nFigure 2: Distribution Patterns & Heavy-Tail Analysis...")
-        self.generate_figure2(str(output_dir))
+        self.generate_figure2(output_dir)
 
         print("\nFigure 3: Cost Landscape & Sensitivity Analysis...")
-        self.generate_figure3(str(output_dir))
+        self.generate_figure3(output_dir)
 
         print("\n" + "="*70)
         print(f"✓ All figures saved to: {output_dir}")
@@ -1047,7 +680,7 @@ class GPUCostFigureGenerator:
         print("SUMMARY STATISTICS BY SPECIES & SAMPLE SIZE")
         print("-" * 70)
 
-        for key in ['mouse_n100', 'mouse_n500', 'mouse_n1000', 'fly_n100', 'fly_n500', 'fly_n1000']:
+        for key in ['mouse_n100', 'mouse_n500', 'fly_n100', 'fly_n500', 'fly_n1000']:
             if key in self.data:
                 m = self.extract_metrics(key)
                 sample_info = key.replace('_', ' ').upper()

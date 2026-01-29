@@ -85,9 +85,8 @@ debug/
 *.parquet
 *.mp4
 cave-scripts-master/
-ConnectomeAgent.docx
-ConnectomeBench.pdf
-# ConnectomeVLM.pdf
+*docx
+*.pdf
 # Claude AI
 .claude*
 .swarm/*

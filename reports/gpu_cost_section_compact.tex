@@ -80,7 +80,7 @@ Costs scale dramatically with mammalian volume (4,300$\times$ from Level 1 to Le
 \label{fig:figure_main_gpu_cost}
 \end{figure}
 
-\textbf{Level 2 cost projections (Connectomic volume scale).} Mouse: $30.8$M edits → $16{,}814$ GPU-hours ($\$33.6$K). Fly: $2.5$M edits → $1{,}528$ GPU-hours ($\$3.1$K) (Figure~\ref{fig:figure_main_gpu_cost}D). Despite $23.4\times$ lower per-neuron effort, fly costs $4.6\%$ less than mouse because cost scales with population size ($75$K vs $139$K neurons). At full-cortex scale (Level 3: 10M neurons), mouse costs reach \$$4.5$M, making large mammalian proofreading economically prohibitive; fly remains at Level 1 (already fully proofread).
+\textbf{Level 2 cost projections (Connectomic volume scale).} Mouse: $30.8$M edits → $16{,}814$ GPU-hours ($\$33.6$K). Fly: $2.5$M edits → $1{,}528$ GPU-hours ($\$3.1$K) (Figure~\ref{fig:figure_main_gpu_cost}D). Despite having twice the number of neurons in the connectomic volume ($75$k vs $140$k) , the mouse costs >$10\times$ than fly because of its $23.4\times$ higher per-neuron effort. At full-cortex scale (Level 3: $10$M neurons), mouse costs reach \$$4.5$M, making large mammalian proofreading economically costly but still more time and cost-effective than human annotators.
 
 \textbf{Cost sensitivity.} Costs are highly sensitive to per-operation inference time. The realistic $1.5$--$2.5$ second range (Figure~\ref{fig:figure_main_gpu_cost}C) spans mouse \$$19$K--\$$38$K and fly \$$3$K--\$$6$K. Optimizing inference latency from $2.5$ to $1.5$ seconds saves $40\%$ GPU hours, emphasizing the importance of model efficiency.
 

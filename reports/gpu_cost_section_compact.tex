@@ -63,11 +63,11 @@ Costs scale dramatically with mammalian volume (4,300$\times$ from Level 1 to Le
 
 \subsection{Results}
 
-\textbf{Edit distributions reveal species-level segmentation differences.} Mouse: $411 \pm 288$ edits/neuron (median=335) vs. fly: $17.5 \pm 32$ edits/neuron (median=8)---a 23.4$\times$ difference reflecting mammalian cortex's higher density and morphological complexity (Figure~\ref{fig:figure_gpu_cost_main}A).
+\textbf{Edit distributions reveal species-level segmentation differences.} Mouse: $411 \pm 288$ edits/neuron (median=335) vs. fly: $17.5 \pm 32$ edits/neuron (median=8)---a 23.4$\times$ difference reflecting mammalian cortex's higher density and morphological complexity (Figure~\ref{fig:figure_main_gpu_cost}A).
 
-\textbf{Operation ratios expose segmentation biases.} Mouse: balanced merge/split (46.3\% / 53.7\%) indicates comparable error modes. Fly: merge-dominated (71.9\% / 28.1\%) reveals systematic FAFB oversegmentation. These patterns indicate optimal proofreading systems must handle both error types (Figure~\ref{fig:figure_gpu_cost_main}B).
+\textbf{Operation ratios expose segmentation biases.} Mouse: balanced merge/split (46.3\% / 53.7\%) indicates comparable error modes. Fly: merge-dominated (71.9\% / 28.1\%) reveals systematic FAFB oversegmentation. These patterns indicate optimal proofreading systems must handle both error types (Figure~\ref{fig:figure_main_gpu_cost}B).
 
-\textbf{Heavy-tail distribution concentrates computational effort.} Mouse heavy-tail neurons (5\%, >971 edits) account for only 14.1\% of total edits (uniform workload). Fly heavy-tail neurons (5\%, >58 edits) concentrate 33.3\% of total edits despite 23.4$\times$ lower per-neuron effort, revealing fly proofreading is dominated by structurally complex outliers (Figure~\ref{fig:figure_gpu_cost_main}A).
+\textbf{Heavy-tail distribution concentrates computational effort.} Mouse heavy-tail neurons (5\%, >971 edits) account for only 14.1\% of total edits (uniform workload). Fly heavy-tail neurons (5\%, >58 edits) concentrate 33.3\% of total edits despite 23.4$\times$ lower per-neuron effort, revealing fly proofreading is dominated by structurally complex outliers (Figure~\ref{fig:figure_main_gpu_cost}A).
 
 \begin{figure}[t]
 \centering
@@ -76,19 +76,19 @@ Costs scale dramatically with mammalian volume (4,300$\times$ from Level 1 to Le
 \textbf{(A)} Heavy-tail edit distribution (log scale, normalized x-axis). Mouse: 4.8\% heavy-tail ($>971$ edits) account for 14.1\% of edits. Fly: 4.7\% heavy-tail ($>58$ edits) concentrate 33.3\% of edits.
 \textbf{(B)} Operation type distribution. Mouse: balanced 46.3\% merge / 53.7\% split. Fly: merge-dominated 71.9\% / 28.1\%, indicating systematic FAFB oversegmentation.
 \textbf{(C)} Cost landscape heatmap (grayscale, $1.0$--$5.0$ s inference time at connectomic scale). Dashed box highlights realistic $1.5$--$2.5$ s range.
-\textbf{(D)} GPU-hour breakdown (naive model). Mouse: 17,136 total hours ($\$$34,262). Fly: 1,388 total hours ($\$$2,775). Despite 23.4$\times$ lower per-neuron effort, mouse requires 12.3$\times$ more GPU-hours due to population size, demonstrating cost scales with volume, not complexity.}
-\label{fig:figure_gpu_cost_main}
+\textbf{(D)} GPU-hour breakdown (naive model). Mouse: 17,136 total hours ($\$$34,262). Fly: 1,388 total hours ($\$$2,775). Despite the connectome volume having 1.85x fewer neurons, the mouse dataset requires 12.3$\times$ more GPU-hours due to its 23.4$\times$ higher per-neuron effort, demonstrating how cost can scale with proofreading complexity independently of volume.}
+\label{fig:figure_main_gpu_cost}
 \end{figure}
 
-\textbf{Level 2 cost projections (Connectomic volume scale).} Mouse: $30.8$M edits → $16{,}814$ GPU-hours ($\$$33.6$K). Fly: $2.5$M edits → $1{,}528$ GPU-hours ($\$$3.1$K) (Figure~\ref{fig:figure_gpu_cost_main}D). Despite $23.4\times$ lower per-neuron effort, fly costs $4.6\%$ less than mouse because cost scales with population size ($75$K vs $139$K neurons). At full-cortex scale (Level 3: 10M neurons), mouse costs reach \$$4.5$M, making large mammalian proofreading economically prohibitive; fly remains at Level 1 (already fully proofread).
+\textbf{Level 2 cost projections (Connectomic volume scale).} Mouse: $30.8$M edits → $16{,}814$ GPU-hours ($\$33.6$K). Fly: $2.5$M edits → $1{,}528$ GPU-hours ($\$3.1$K) (Figure~\ref{fig:figure_main_gpu_cost}D). Despite $23.4\times$ lower per-neuron effort, fly costs $4.6\%$ less than mouse because cost scales with population size ($75$K vs $139$K neurons). At full-cortex scale (Level 3: 10M neurons), mouse costs reach \$$4.5$M, making large mammalian proofreading economically prohibitive; fly remains at Level 1 (already fully proofread).
 
-\textbf{Cost sensitivity.} Costs are highly sensitive to per-operation inference time. The realistic $1.5$--$2.5$ second range (Figure~\ref{fig:figure_gpu_cost_main}C) spans mouse \$$19$K--\$$38$K and fly \$$3$K--\$$6$K. Optimizing inference latency from $2.5$ to $1.5$ seconds saves $40\%$ GPU hours, emphasizing the importance of model efficiency.
+\textbf{Cost sensitivity.} Costs are highly sensitive to per-operation inference time. The realistic $1.5$--$2.5$ second range (Figure~\ref{fig:figure_main_gpu_cost}C) spans mouse \$$19$K--\$$38$K and fly \$$3$K--\$$6$K. Optimizing inference latency from $2.5$ to $1.5$ seconds saves $40\%$ GPU hours, emphasizing the importance of model efficiency.
 
 \textbf{Statistical validation.} Cross-sample consistency between $n=100$ and $n=500$ mouse samples validates our extrapolation approach: mean edits differ by 2.5\%, projected totals differ by 2.5\%, and heavy-tail contribution differs by 32.6\%. Similar consistency for fly ($n=100$ vs $n=1{,}000$: 6.6\% and 6.5\% differences) demonstrates robust sampling methodology.
 
 \subsection{Discussion}
 
-\textbf{Key insight: costs scale with volume, not complexity.} Level 1: mouse cheaper (\$$1{,}057$ vs \$$2{,}714$). Level 2: mouse $11\times$ more expensive (\$$33{,}628$ vs \$$3{,}056$) despite lower per-neuron effort, due to population size. Level 3: mouse costs \$$4.5$M, while fly unchanged. This inverse relationship makes large mammalian proofreading economically prohibitive but feasible for insects.
+\textbf{Key insight: costs scale with volume and complexity.} Level 1: mouse cheaper (\$$1{,}057$ vs \$$2{,}714$). Level 2: mouse $11\times$ more expensive (\$$33{,}628$ vs \$$3{,}056$) due to higher per-neuron effort and population size. Level 3: mouse costs \$$4.5$M, while fly unchanged. This inverse relationship makes large mammalian proofreading economically prohibitive but feasible for insects.
 
 \textbf{Model implications.} Task-stratified costs reveal that merge operations (2.5s, high complexity) dominate both species' GPU burden: mouse $59\%$, fly $89\%$. This asymmetry indicates optimization potential: reducing merge errors (primary FAFB bias) offers greater savings than reducing split errors. Computational feasibility (\$$3$K--\$$34$K per typical volume) makes GPU-accelerated proofreading economically viable versus human annotation (30 human-years for FlyWire), but scaling mammalian volumes requires: (1) algorithmic latency reduction and (2) improved segmentation quality.
 
@@ -99,37 +99,17 @@ Costs scale dramatically with mammalian volume (4,300$\times$ from Level 1 to Le
 
 \subsection*{Appendix: Supplementary Analysis}
 
-\subsubsection*{A. Detailed Cost Calculation Methodology}
+\subsubsection*{A. Calculation Methodology}
 
-All GPU cost calculations are derived from extrapolated edit statistics obtained from representative samples of the proofread populations. This appendix documents the complete calculation methodology and intermediate values for transparency and reproducibility.
+\textbf{Input Data:} Mouse sample ($n=500$ from 2,314 proofread neurons) with 205,572 total edits (95,182 merge, 110,390 split). Fly sample ($n=1{,}000$ from 139,255 neurons) with 17,541 total edits (12,981 merge, 4,560 split).
 
-\textbf{Input Data and Sampling Strategy:} We analyzed $n=500$ neurons sampled randomly from the mouse MICrONS dataset (2,314 total proofread neurons in 1 mm$^3$ volume) and $n=1{,}000$ neurons sampled from the complete FlyWire dataset (139,255 neurons). For each neuron, we retrieved the complete edit history, categorizing operations as merge (consolidating over-split fragments) or split (separating under-segmented regions).
+\textbf{Extrapolation to Full Populations:} Linear extrapolation yields mouse 951,387 total edits (440,502 merge, 510,884 split) and fly 2,442,671 total edits (1,807,669 merge, 635,002 split).
 
-\textbf{Extrapolation to Full Datasets:}
-The sampled edit statistics were extrapolated linearly to the full proofread populations:
-\begin{itemize}
-\item \textbf{Mouse:} Sample of 500 neurons with 205,572 total edits (95,182 merge, 110,390 split) scales to estimated 2,314 neurons with 951,387 total edits (440,502 merge, 510,884 split). Scaling factor: 951,387 / 205,572 = 4.628.
-\item \textbf{Fly:} Sample of 1,000 neurons with 17,541 total edits (12,981 merge, 4,560 split) scales to estimated 139,255 neurons with 2,442,671 total edits (1,807,669 merge, 635,002 split). Scaling factor: 2,442,671 / 17,541 = 139.255.
-\end{itemize}
+\textbf{Cost Formula:} Cost $=$ GPU-hours $\times \$2/\text{hour}$, where GPU-hours $=$ [(merge edits $\times t_{\text{merge}}$ + split edits $\times t_{\text{split}}$) $/$ 3,600] for realistic model ($t_{\text{merge}}=2.5$ s, $t_{\text{split}}=1.5$ s) or uniform model ($t=2.0$ s for both).
 
-\textbf{Cost Calculation Formula:} GPU cost is computed as:
-\begin{equation}
-\text{Cost} = \frac{\text{GPU-hours} \times \$2}{\text{GPU-hour}}
-\end{equation}
-where GPU-hours depend on the inference time model:
-\begin{align}
-\text{GPU-hours (Naive)} &= \frac{(\text{merge\_edits} + \text{split\_edits}) \times 2.0 \text{ s}}{3{,}600 \text{ s/hour}} \\
-\text{GPU-hours (Realistic)} &= \frac{(\text{merge\_edits} \times 2.5 \text{ s} + \text{split\_edits} \times 1.5 \text{ s})}{3{,}600 \text{ s/hour}}
-\end{align}
+\textbf{Level 2 (Connectomic volumes):} Mouse 75,000 neurons (32.4$\times$ scaling from Level 1). Fly 139,255 neurons (unchanged, already fully proofread).
 
-\textbf{Extrapolation to Connectomic Volumes (Level 2):} Level 2 projects costs to expected neuron populations for complete connectomic deployments:
-\begin{align}
-\text{Mouse:} \quad \text{neurons} &= 75{,}000 \text{ (expected in full 1 mm}^3\text{ at MICrONS density)} \\
-\text{Fly:} \quad \text{neurons} &= 140{,}000 \text{ (conservative estimate for complete brain)}
-\end{align}
-Edits and operation counts scale linearly: $\text{edits}_{\text{L2}} = \text{edits}_{\text{L1}} \times \frac{\text{neurons}_{\text{L2}}}{\text{neurons}_{\text{L1}}}$.
-
-\textbf{Extrapolation to Full Cortex (Level 3):} Level 3 projects to the entire mouse neocortex ($\sim$10 million neurons, $112$ mm$^3$), assuming uniform per-neuron editing effort across the volume. Fly Level 3 equals Level 1 since the brain is fully proofread.
+\textbf{Level 3 (Mammalian cortex):} Mouse 10,000,000 neurons (4,321.5$\times$ scaling), fly unchanged at Level 1.
 
 \subsubsection*{B. Detailed Calculation Tables}
 
@@ -215,19 +195,14 @@ Scaling factor: $10{,}000{,}000 / 2{,}314 = 4{,}321.52$
 \begin{figure}[h]
 \centering
 \includegraphics[width=\textwidth]{figures/figure_supplement_analysis.png}
-\caption{\textbf{Supplementary Figure: Sample Size Validation and Distribution Analysis (7 Panels).}
-Comprehensive validation of sampling methodology and detailed analysis of edit distribution patterns across species.
-
-\textbf{Panels A--C: Sample Size Validation and Robustness.}
-\textbf{(A) Mean Edits per Neuron.} Per-neuron edit statistics across increasing sample sizes (n=100, n=500, n=1000) for both species, using grayscale bars. Demonstrates robust sampling stability: mouse mean stabilizes around 411 edits/neuron with $<2\%$ variation; fly stabilizes around 17.5 edits/neuron with $<8\%$ variation, well within acceptable bounds for statistical inference. Validates that samples are representative of full proofread populations.
-\textbf{(B) Extrapolated Full-Dataset Totals.} Projected total edits when extrapolating samples to their respective full proofread populations (2,314 mouse neurons in 1mm$^3$ MICrONS volume; 139,255 neurons in complete FlyWire brain). Shows convergence and stability of extrapolation with increasing sample size, demonstrating consistency of the linear extrapolation methodology used in main figure calculations.
-\textbf{(C) Heavy-Tail Edit Concentration.} Percentage of total edits contributed by heavy-tail neurons (defined as $>95$th percentile threshold) across different sample sizes. Validates that heavy-tail concentration patterns are consistent and robust across sample sizes, with mouse $\sim14\%$ and fly $\sim33\%$ contributions regardless of n.
-
-\textbf{Panels D--G: Edit Distribution Patterns and Heavy-Tail Structure Analysis.}
-\textbf{(D) Mouse (n=500) Edit Distribution Histogram.} Grayscale histogram of edit counts across 500 sampled mouse neurons on linear scale, showing pronounced right-skewed distribution. Median (335 edits, dark dashed line) substantially below mean ($411.1$ edits, gray dashed line), indicating strong heavy-tail effect. Concentration of neurons at low edit counts ($0$--$200$ range) emphasized by linear y-axis scaling.
-\textbf{(E) Fly (n=1000) Edit Distribution Histogram (Log Scale).} Grayscale histogram of edit counts across $1{,}000$ sampled fly neurons using log-scale y-axis to visualize the full distribution range. Despite $23.4\times$ lower mean ($17.5$ edits/neuron vs. $411$), fly also exhibits pronounced right-skewed distribution. Log scaling reveals structure across orders of magnitude and preserves visibility of rare high-edit neurons that dominate computational cost.
-\textbf{(F) Mouse Heavy-Tail Pattern (Rank-Ordered Scatter).} Rank-ordered plot showing neuron index (x-axis) vs. edits per neuron (y-axis) on linear scale, revealing power-law-like decay characteristic. Dark gray points exceed 95th percentile threshold (971 edits). Annotation box highlights that heavy-tail neurons ($24$ of $500$, $4.8\%$) concentrate only $14.1\%$ of total edits, indicating relatively uniform workload distribution across mouse neurons.
-\textbf{(G) Fly Heavy-Tail Pattern (Rank-Ordered, Log Scale).} Parallel analysis for fly neurons ($1{,}000$ sample) using log y-axis to accommodate smaller absolute edit values. Dark gray points exceed 95th percentile ($58$ edits). Annotation box reports that heavy-tail neurons ($47$ of $1000$, $4.7\%$) concentrate $33.3\%$ of total edits---a striking contrast to mouse, revealing that fly proofreading workload is dominated by a small number of structurally complex outliers despite much lower per-neuron baseline effort.}
+\caption{\textbf{Supplementary Figure: Sample Size Validation and Distribution Analysis.}
+\textbf{(A)} Mean edits/neuron across sample sizes (n=100, 500, 1000). Mouse stabilizes $\sim$411 ($<2\%$ variation); fly $\sim$17.5 ($<8\%$ variation).
+\textbf{(B)} Extrapolated full-dataset totals validating linear extrapolation consistency.
+\textbf{(C)} Heavy-tail contribution robustness: mouse $\sim$14\%, fly $\sim$33\%, invariant across n.
+\textbf{(D)} Mouse (n=500) histogram: right-skewed, median 335 vs. mean 411.1, indicating heavy-tail effect.
+\textbf{(E)} Fly (n=1000) histogram (log scale): despite 23.4$\times$ lower mean (17.5 vs. 411 edits/neuron), also right-skewed.
+\textbf{(F)} Mouse rank-ordered scatter: 4.8\% heavy-tail ($>$971 edits) concentrate only 14.1\% of edits (uniform workload).
+\textbf{(G)} Fly rank-ordered scatter (log scale): 4.7\% heavy-tail ($>$58 edits) concentrate 33.3\% of edits (dominated by outliers).}
 \label{fig:figure_supplement_analysis}
 \end{figure}
 
